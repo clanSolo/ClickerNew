@@ -42,7 +42,7 @@ class EventListViewModel(application: Application) : AndroidViewModel(applicatio
     private val editionRepository = EditionRepository.getInstance(application)
     /** The repository for the pro mode billing. */
     private val billingRepository = IBillingRepository.getRepository(application)
-    /** Monitors the views for the tutorial. */
+    /** Monitors the views. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
     /** Currently configured events. */

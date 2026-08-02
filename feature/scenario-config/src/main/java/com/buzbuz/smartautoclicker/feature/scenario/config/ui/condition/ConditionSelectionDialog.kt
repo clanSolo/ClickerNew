@@ -47,7 +47,7 @@ class ConditionSelectionDialog(
     private val onConditionSelected: (Condition) -> Unit,
 ): OverlayDialog(R.style.ScenarioConfigTheme) {
 
-    /** Monitors views for the tutorial. */
+    /** Monitors views. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
     /** ViewBinding containing the views for this dialog. */
     private lateinit var viewBinding: DialogBaseSelectionBinding

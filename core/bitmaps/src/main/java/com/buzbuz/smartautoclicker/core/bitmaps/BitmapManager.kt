@@ -95,7 +95,5 @@ interface BitmapManager {
 
 /** The prefix appended to all bitmap file names. */
 const val CONDITION_FILE_PREFIX = "Condition_"
-/** The prefix appended to all bitmap file names. */
-const val TUTORIAL_CONDITION_FILE_PREFIX = "Tutorial_Condition_"
 /** The name of the directory containing the screen captures, in the app specific external files directory. */
 const val SCREEN_CAPTURE_DIRECTORY_NAME = "capturas"

@@ -26,7 +26,7 @@ import com.buzbuz.smartautoclicker.core.ui.monitoring.MonitoredViewType
 
 class ActionTypeSelectionViewModel(application: Application) : AndroidViewModel(application) {
 
-    /** Monitors views for the tutorial. */
+    /** Monitors views. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
     fun monitorCreateClickView(view: View) {

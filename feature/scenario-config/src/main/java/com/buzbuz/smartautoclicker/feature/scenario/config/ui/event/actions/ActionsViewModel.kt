@@ -47,7 +47,7 @@ class ActionsViewModel(application: Application) : AndroidViewModel(application)
     private val editionRepository = EditionRepository.getInstance(application)
     /** The repository for the pro mode billing. */
     private val billingRepository = IBillingRepository.getRepository(application)
-    /** Monitors views for the tutorial. */
+    /** Monitors views. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
     /** Currently configured actions. */

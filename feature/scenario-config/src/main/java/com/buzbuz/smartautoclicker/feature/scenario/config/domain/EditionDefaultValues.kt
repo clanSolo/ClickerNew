@@ -17,7 +17,6 @@
 package com.buzbuz.smartautoclicker.feature.scenario.config.domain
 
 import android.content.Context
-import com.buzbuz.smartautoclicker.core.domain.Repository
 import com.buzbuz.smartautoclicker.core.domain.model.AND
 import com.buzbuz.smartautoclicker.core.domain.model.ConditionOperator
 import com.buzbuz.smartautoclicker.core.domain.model.EXACT
@@ -31,10 +30,6 @@ import com.buzbuz.smartautoclicker.feature.scenario.config.utils.getSwipeDuratio
 
 internal class EditionDefaultValues(context: Context) {
 
-    private val scenarioRepository: Repository = Repository.getRepository(context)
-
-    private fun isTutorialModeEnabled(): Boolean = scenarioRepository.isTutorialModeEnabled()
-
     fun eventName(context: Context): String =
         context.getString(R.string.default_event_name)
     @ConditionOperator fun eventConditionOperator(): Int =
@@ -43,8 +38,7 @@ internal class EditionDefaultValues(context: Context) {
     fun conditionName(context: Context): String =
         context.getString(R.string.default_condition_name)
     fun conditionThreshold(context: Context): Int =
-        if (isTutorialModeEnabled()) 15
-        else context.resources.getInteger(R.integer.default_condition_threshold)
+        context.resources.getInteger(R.integer.default_condition_threshold)
     fun conditionDetectionType(): Int =
         EXACT
     fun conditionShouldBeDetected(): Boolean =
@@ -53,8 +47,7 @@ internal class EditionDefaultValues(context: Context) {
     fun clickName(context: Context): String =
         context.getString(R.string.default_click_name)
     fun clickPressDuration(context: Context): Long =
-        if (isTutorialModeEnabled()) 1
-        else context.getEventConfigPreferences().getClickPressDurationConfig(context)
+        context.getEventConfigPreferences().getClickPressDurationConfig(context)
     fun clickPositionType(): Action.Click.PositionType =
         Action.Click.PositionType.USER_SELECTED
 
