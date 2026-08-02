@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Kevin Buzeau
+ * Copyright (C) 2023 Kevin Buzeau
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,40 +18,76 @@ package com.buzbuz.smartautoclicker.feature.tutorial.ui
 
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.enableEdgeToEdge
 
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment
 
-import com.buzbuz.smartautoclicker.core.common.overlays.manager.OverlayManager
+import com.buzbuz.smartautoclicker.core.ui.overlays.manager.OverlayManager
 import com.buzbuz.smartautoclicker.feature.tutorial.R
-import dagger.hilt.android.AndroidEntryPoint
 
-import javax.inject.Inject
+import kotlinx.coroutines.launch
 
-@AndroidEntryPoint
+
 class TutorialActivity : AppCompatActivity() {
 
     private val viewModel: TutorialViewModel by viewModels()
-
-    @Inject lateinit var overlayManager: OverlayManager
+    private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_tutorial)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         setupActionBar()
+
+        navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment)
+            .navController
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.shouldBeStopped.collect { shouldBeStopped ->
+                        if (shouldBeStopped) finish()
+                    }
+                }
+
+                launch {
+                    viewModel.onFloatingUiVisibilityStep.collect { newVisibility ->
+                        setFloatingUiVisibility(newVisibility)
+                        viewModel.validateFloatingUiVisibilityStep()
+                    }
+                }
+            }
+        }
+
+        viewModel.startTutorialMode()
+    }
+
+    override fun onDestroy() {
+        viewModel.stopTutorialMode()
+        super.onDestroy()
+        setFloatingUiVisibility(true)
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        onBackPressedDispatcher.onBackPressed()
+        if (!navController.navigateUp()) finish()
         return true
     }
 
     private fun setupActionBar() {
         setSupportActionBar(findViewById(R.id.topAppBar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    }
+
+    private fun setFloatingUiVisibility(isVisible: Boolean) {
+        OverlayManager.getInstance(this).apply {
+            if (isVisible) restoreVisibility()
+            else hideAll()
+        }
     }
 }

@@ -26,9 +26,6 @@
 -keepattributes SourceFile,LineNumberTable        # Keep file names and line numbers.
 -keep public class * extends java.lang.Exception  # Optional: Keep custom exceptions.
 
--dontwarn com.google.firebase.crashlytics.ktx.FirebaseCrashlyticsKt
--dontwarn com.google.firebase.ktx.Firebase
-
 # @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
 
@@ -38,9 +35,3 @@
 -keep interface com.squareup.okhttp3.** { *; }
 -dontwarn javax.annotation.Nullable
 -dontwarn javax.annotation.ParametersAreNonnullByDefault
-
--assumenosideeffects class android.util.Log {
-    public static boolean isLoggable(java.lang.String, int);
-    public static int d(...);
-    public static int v(...);
-}

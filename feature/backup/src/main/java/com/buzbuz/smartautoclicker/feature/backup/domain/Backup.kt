@@ -17,7 +17,7 @@
 package com.buzbuz.smartautoclicker.feature.backup.domain
 
 /** State of a backup import/export. */
-sealed class Backup {
+internal sealed class Backup {
 
     /**
      * The backup is progressing.
@@ -27,7 +27,7 @@ sealed class Backup {
     data class Loading(val progress: Int? = null, val maxProgress: Int? = null) : Backup()
 
     /** The backup is verifying the imported data. */
-    data object Verification : Backup()
+    object Verification : Backup()
 
     /**
      * The backup is completed.
@@ -38,5 +38,5 @@ sealed class Backup {
     data class Completed(val successCount: Int, val failureCount: Int, val compatWarning: Boolean) : Backup()
 
     /** The backup has encountered an error and has stopped. */
-    data object Error : Backup()
+    object Error : Backup()
 }

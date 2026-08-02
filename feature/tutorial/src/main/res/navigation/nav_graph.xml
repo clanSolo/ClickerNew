@@ -27,67 +27,23 @@
         android:label="fragment_two"
         tools:layout="@layout/fragment_tutorial_list">
 
-        <argument
-            android:name="categoryType"
-            app:argType="com.buzbuz.smartautoclicker.feature.tutorial.domain.model.TutorialCategory$Type"
-            android:defaultValue="ROOT"/>
-
-        <action
-            android:id="@+id/tutorial_list_to_category"
-            app:destination="@id/fragment_tutorial_list"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
-
         <action
             android:id="@+id/tutorial_list_to_game"
-            app:destination="@id/fragment_game"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
-
-        <action
-            android:id="@+id/tutorial_list_to_timing_game"
-            app:destination="@id/fragment_timing_game"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
-
-        <action
-            android:id="@+id/tutorial_list_to_slideshow"
-            app:destination="@id/fragment_slideshow"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"/>
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/fragment_slideshow"
-        android:name="com.buzbuz.smartautoclicker.feature.tutorial.ui.slideshow.TutorialSlideshowFragment"
-        android:label="fragment_slideshow"
-        tools:layout="@layout/fragment_tutorial_slideshow">
-
-        <argument
-            android:name="slideshowType"
-            app:argType="com.buzbuz.smartautoclicker.feature.tutorial.domain.model.TutorialSlideshow$Type"/>
+            app:destination="@id/fragment_game"/>
 
     </fragment>
 
     <fragment
         android:id="@+id/fragment_game"
-        android:name="com.buzbuz.smartautoclicker.feature.tutorial.ui.game.clickcount.ClickCountGameFragment"
+        android:name="com.buzbuz.smartautoclicker.feature.tutorial.ui.game.TutorialGameFragment"
         android:label="fragment_two"
-        tools:layout="@layout/fragment_click_count_game"/>
+        tools:layout="@layout/fragment_tutorial_game">
 
-    <fragment
-        android:id="@+id/fragment_timing_game"
-        android:name="com.buzbuz.smartautoclicker.feature.tutorial.ui.game.timing.TimingGameFragment"
-        android:label="fragment_timing_game"
-        tools:layout="@layout/fragment_timing_game"/>
+        <argument
+            android:name="gameIndex"
+            app:argType="integer"
+            android:defaultValue="0" />
+
+    </fragment>
 
 </navigation>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Kevin Buzeau
+ * Copyright (C) 2023 Kevin Buzeau
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,22 +27,19 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 
-import com.buzbuz.smartautoclicker.core.common.overlays.other.FullscreenOverlay
-import com.buzbuz.smartautoclicker.core.common.overlays.base.viewModels
+import com.buzbuz.smartautoclicker.core.ui.overlays.FullscreenOverlay
+import com.buzbuz.smartautoclicker.core.ui.overlays.manager.OverlayManager
+import com.buzbuz.smartautoclicker.core.ui.overlays.viewModels
 import com.buzbuz.smartautoclicker.feature.tutorial.R
 import com.buzbuz.smartautoclicker.feature.tutorial.databinding.IncludeTutorialInstructionsBinding
 import com.buzbuz.smartautoclicker.feature.tutorial.databinding.OverlayTutorialBinding
-import com.buzbuz.smartautoclicker.feature.tutorial.di.TutorialViewModelsEntryPoint
 
 import kotlinx.coroutines.launch
 
 class TutorialFullscreenOverlay : FullscreenOverlay(theme = R.style.AppTheme) {
 
     /** The view model for this overlay. */
-    private val viewModel: TutorialOverlayViewModel by viewModels(
-        entryPoint = TutorialViewModelsEntryPoint::class.java,
-        creator = { tutorialOverlayViewModel() },
-    )
+    private val viewModel: TutorialOverlayViewModel by viewModels()
 
     /** ViewBinding containing the views for this overlay. */
     private lateinit var viewBinding: OverlayTutorialBinding
@@ -53,7 +50,7 @@ class TutorialFullscreenOverlay : FullscreenOverlay(theme = R.style.AppTheme) {
         viewBinding = OverlayTutorialBinding.inflate(layoutInflater).apply {
             buttonSkipAll.setOnClickListener { onSkipAllClicked() }
             buttonNext.setOnClickListener { viewModel.toNextTutorialStep() }
-            tutorialBackground.onMonitoredViewClickedListener = viewModel::performClickOnMonitoredView
+            tutorialBackground.onMonitoredViewClickedListener = viewModel::toNextTutorialStep
         }
 
         instructionsViewBinding = IncludeTutorialInstructionsBinding.inflate(layoutInflater)
@@ -70,22 +67,21 @@ class TutorialFullscreenOverlay : FullscreenOverlay(theme = R.style.AppTheme) {
     }
 
     private fun onSkipAllClicked() {
-        overlayManager.restoreVisibility()
+        OverlayManager.getInstance(context).restoreVisibility()
         viewModel.toLastTutorialStep()
-        finish()
     }
 
-    private fun updateUiState(uiState: TutorialFullscreenUiState?) {
+    private fun updateUiState(uiState: UiTutorialOverlayState?) {
         uiState ?: return
 
         when(uiState.exitButton) {
-            TutorialExitButtonUiState.Next -> updateUiStateWithNextButton(uiState)
-            is TutorialExitButtonUiState.MonitoredView -> updateUiStateWithMonitoredViewHole(uiState)
+            TutorialExitButton.Next -> updateUiStateWithNextButton(uiState)
+            is TutorialExitButton.MonitoredView -> updateUiStateWithMonitoredViewHole(uiState)
             else -> updateUiStateWithoutButton(uiState)
         }
     }
 
-    private fun updateUiStateWithNextButton(uiState: TutorialFullscreenUiState) {
+    private fun updateUiStateWithNextButton(uiState: UiTutorialOverlayState) {
         viewBinding.apply {
             buttonNext.visibility = View.VISIBLE
             tutorialBackground.expectedViewPosition = null
@@ -95,8 +91,8 @@ class TutorialFullscreenOverlay : FullscreenOverlay(theme = R.style.AppTheme) {
         setInstructions(uiState)
     }
 
-    private fun updateUiStateWithMonitoredViewHole(uiState: TutorialFullscreenUiState) {
-        val exitButton = uiState.exitButton as TutorialExitButtonUiState.MonitoredView
+    private fun updateUiStateWithMonitoredViewHole(uiState: UiTutorialOverlayState) {
+        val exitButton = uiState.exitButton as TutorialExitButton.MonitoredView
 
         viewBinding.apply {
             buttonNext.visibility = View.GONE
@@ -107,7 +103,7 @@ class TutorialFullscreenOverlay : FullscreenOverlay(theme = R.style.AppTheme) {
         setInstructions(uiState)
     }
 
-    private fun updateUiStateWithoutButton(uiState: TutorialFullscreenUiState) {
+    private fun updateUiStateWithoutButton(uiState: UiTutorialOverlayState) {
         viewBinding.apply {
             buttonNext.visibility = View.GONE
             tutorialBackground.expectedViewPosition = null
@@ -117,7 +113,7 @@ class TutorialFullscreenOverlay : FullscreenOverlay(theme = R.style.AppTheme) {
         setInstructions(uiState)
     }
 
-    private fun setInstructions(uiState: TutorialFullscreenUiState) {
+    private fun setInstructions(uiState: UiTutorialOverlayState) {
         instructionsViewBinding.apply {
             textInstructions.setText(uiState.instructionsResId)
 

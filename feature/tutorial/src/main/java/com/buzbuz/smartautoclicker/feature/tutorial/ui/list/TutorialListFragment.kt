@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Kevin Buzeau
+ * Copyright (C) 2023 Kevin Buzeau
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,52 +16,40 @@
  */
 package com.buzbuz.smartautoclicker.feature.tutorial.ui.list
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.buzbuz.smartautoclicker.core.ui.overlays.manager.OverlayManager
 
-import com.buzbuz.smartautoclicker.core.display.recorder.MediaProjectionRequest
-import com.buzbuz.smartautoclicker.core.ui.bindings.lists.updateState
-import com.buzbuz.smartautoclicker.core.ui.databinding.IncludeLoadableListBinding
-import com.buzbuz.smartautoclicker.core.ui.errors.createNoMediaProjectionDialog
-import com.buzbuz.smartautoclicker.feature.tutorial.R
-import com.buzbuz.smartautoclicker.feature.tutorial.domain.model.TutorialCategoryUiItems
-import com.buzbuz.smartautoclicker.feature.tutorial.domain.model.TutorialCategoryUiState
-import com.buzbuz.smartautoclicker.feature.tutorial.domain.model.TutorialItem
+import com.buzbuz.smartautoclicker.feature.tutorial.databinding.FragmentTutorialListBinding
 
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
-
-@AndroidEntryPoint
 class TutorialListFragment : Fragment() {
 
     /** ViewModel providing the state of the UI. */
     private val viewModel: TutorialListViewModel by viewModels()
     /** ViewBinding containing the views for this fragment. */
-    private lateinit var viewBinding: IncludeLoadableListBinding
+    private lateinit var viewBinding: FragmentTutorialListBinding
     /** Adapter for the list of tutorials. */
     private lateinit var adapter: TutorialListAdapter
 
-    /** The result launcher for the projection permission dialog. */
-    private val mediaProjectionRequest: MediaProjectionRequest = MediaProjectionRequest()
-
+    private var isOpeningTutorial: Boolean = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        viewBinding = IncludeLoadableListBinding.inflate(inflater, container, false)
+        viewBinding = FragmentTutorialListBinding.inflate(inflater, container, false)
 
-        adapter = TutorialListAdapter(onItemClicked = ::onItemClicked)
-        mediaProjectionRequest.registerForActivityResult(this)
+        adapter = TutorialListAdapter(
+            onGameClicked = ::onGameClicked,
+        )
 
         return viewBinding.root
     }
@@ -73,75 +61,18 @@ class TutorialListFragment : Fragment() {
 
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch { viewModel.uiState.collect(::updateUi) }
+                viewModel.items.collect(adapter::submitList)
             }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        viewModel.stopTutorial()
+    override fun onStart() {
+        super.onStart()
+        OverlayManager.getInstance(requireContext()).hideAll()
     }
 
-    private fun updateUi(uiState: TutorialCategoryUiState) {
-        when (uiState) {
-            TutorialCategoryUiState.Loading -> viewBinding.updateState(null)
-            is TutorialCategoryUiState.Loaded -> {
-                viewBinding.updateState(uiState.items)
-                adapter.submitList(uiState.items)
-            }
-        }
-    }
-
-    private fun onItemClicked(item: TutorialCategoryUiItems.Item) {
-        when (item) {
-            is TutorialCategoryUiItems.Item.Category -> {
-                findNavController().navigate(
-                    TutorialListFragmentDirections.tutorialListToCategory(item.type)
-                )
-            }
-
-            is TutorialCategoryUiItems.Item.Tutorial -> {
-                val tutorialActivity : AppCompatActivity = activity as? AppCompatActivity ?: return
-                viewModel.startPermissionFlowIfNeeded(
-                    activity = tutorialActivity,
-                    onAllGranted = { showMediaProjectionWarning(item) },
-                )
-            }
-
-            is TutorialCategoryUiItems.Item.Slideshow -> {
-                findNavController().navigate(
-                    TutorialListFragmentDirections.tutorialListToSlideshow(item.type)
-                )
-            }
-        }
-    }
-
-    private fun showMediaProjectionWarning(item: TutorialCategoryUiItems.Item.Tutorial) {
-        mediaProjectionRequest.showMediaProjectionWarning(
-            context = requireContext(),
-            forceEntireScreen = true,
-            onSuccess = { resultCode, data -> startTutorial(item, resultCode, data) },
-            onFailure = { showProjectionDeniedToast() },
-            onError = { showUnsupportedDeviceDialog() },
-        )
-    }
-
-    private fun showProjectionDeniedToast() {
-        Toast.makeText(activity, R.string.toast_denied_screen_sharing_permission, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun showUnsupportedDeviceDialog() {
-        requireContext().createNoMediaProjectionDialog { activity?.finish() }.show()
-    }
-
-    private fun startTutorial(item: TutorialCategoryUiItems.Item.Tutorial, resultCode: Int, data: Intent) {
-        viewModel.startTutorial(item, resultCode, data)
-        val action = if (item.type == TutorialItem.Type.TIMER_REACHED_CONDITION) {
-            TutorialListFragmentDirections.tutorialListToTimingGame()
-        } else {
-            TutorialListFragmentDirections.tutorialListToGame()
-        }
-        findNavController().navigate(action)
+    private fun onGameClicked(gameIndex: Int) {
+        isOpeningTutorial = true
+        findNavController().navigate(TutorialListFragmentDirections.tutorialListToGame(gameIndex))
     }
 }

@@ -16,7 +16,7 @@
  */
 package com.buzbuz.smartautoclicker.feature.backup.ui
 
-import android.content.Context
+import android.app.Application
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
@@ -24,30 +24,31 @@ import android.view.View
 
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-
-import com.buzbuz.smartautoclicker.core.display.config.DisplayConfigManager
+import com.buzbuz.smartautoclicker.core.display.DisplayMetrics
 import com.buzbuz.smartautoclicker.feature.backup.R
+
 import com.buzbuz.smartautoclicker.feature.backup.domain.Backup
 import com.buzbuz.smartautoclicker.feature.backup.domain.BackupRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * View model for the [BackupDialogFragment].
  * Handle the state of a backup, import or export.
+ *
+ * @param application the Android application.
  */
-@HiltViewModel
-class BackupViewModel @Inject constructor(
-    private val repository: BackupRepository,
-    private val displayConfigManager: DisplayConfigManager,
-) : ViewModel() {
+class BackupViewModel(application: Application) : AndroidViewModel(application) {
+
+    /** The repository providing access to the database. */
+    private val repository = BackupRepository.getInstance(application)
+    /** The metrics of the screen.  */
+    private val displayMetrics = DisplayMetrics.getInstance(application.applicationContext)
 
     /** The state of the backup. Null if not started yet. */
     private val _backupState = MutableStateFlow<BackupDialogUiState?>(null)
@@ -58,8 +59,8 @@ class BackupViewModel @Inject constructor(
      * Setup this view model by specifying if we want to import or export.
      * @param isImport true for import, false for export.
      */
-    fun initialize(context: Context, isImport: Boolean) {
-        _backupState.value = getInitialState(context, isImport)
+    fun initialize(isImport: Boolean) {
+        _backupState.value = getInitialState(isImport)
     }
 
     /** @return the intent for selecting the file for the new exported backup. */
@@ -83,23 +84,17 @@ class BackupViewModel @Inject constructor(
      * @param uri the uri of the file provided by [createBackupFileCreationIntent] or
      * [createBackupRestorationFileSelectionIntent] intent data result.
      * @param isImport true for an import, false for an export.
-     * @param smartScenarios the list of scenario to be exported. Ignored for an import.
+     * @param scenarios the list of scenario to be exported. Ignored for an import.
      */
-    fun startBackup(
-        context: Context,
-        uri: Uri,
-        isImport: Boolean,
-        dumbScenarios: List<Long> = emptyList(),
-        smartScenarios: List<Long> = emptyList(),
-    ) {
+    fun startBackup(uri: Uri, isImport: Boolean, scenarios: List<Long> = emptyList()) {
         viewModelScope.launch(Dispatchers.IO) {
             if (isImport) {
-                repository.restoreScenarioBackup(uri, displayConfigManager.displayConfig.sizePx).collect { backup ->
-                    updateBackupState(context, backup, true)
+                repository.restoreScenarioBackup(uri, displayMetrics.screenSize).collect { backup ->
+                    updateBackupState(backup, true)
                 }
             } else {
-                repository.createScenarioBackup(uri, dumbScenarios, smartScenarios, displayConfigManager.displayConfig.sizePx).collect { backup ->
-                    updateBackupState(context, backup, false)
+                repository.createScenarioBackup(uri, scenarios, displayMetrics.screenSize).collect { backup ->
+                    updateBackupState(backup, false)
                 }
             }
         }
@@ -110,13 +105,13 @@ class BackupViewModel @Inject constructor(
      * @param backup the last backup results.
      * @param isImport true for an import, false for an export.
      */
-    private fun updateBackupState(context: Context, backup: Backup?, isImport: Boolean) {
+    private fun updateBackupState(backup: Backup?, isImport: Boolean) {
         _backupState.value = when (backup) {
-            is Backup.Loading -> getLoadingState(context, backup, isImport)
-            Backup.Verification -> getVerificationState(context)
-            Backup.Error -> getErrorState(context, isImport)
-            is Backup.Completed -> getCompletedState(context, backup, isImport)
-            null -> getInitialState(context, isImport)
+            is Backup.Loading -> getLoadingState(backup, isImport)
+            Backup.Verification -> getVerificationState()
+            Backup.Error -> getErrorState(isImport)
+            is Backup.Completed -> getCompletedState(backup, isImport)
+            null -> getInitialState(isImport)
         }
     }
 
@@ -125,7 +120,7 @@ class BackupViewModel @Inject constructor(
      * @param isImport true for an import, false for an export.
      * @return the initial state.
      */
-    private fun getInitialState(context: Context, isImport: Boolean) = BackupDialogUiState(
+    private fun getInitialState(isImport: Boolean) = BackupDialogUiState(
         fileSelectionVisibility = View.VISIBLE,
         loadingVisibility = View.GONE,
         textStatusVisibility = View.GONE,
@@ -133,8 +128,8 @@ class BackupViewModel @Inject constructor(
         iconStatusVisibility = View.VISIBLE,
         dialogOkButtonEnabled = false,
         dialogCancelButtonEnabled = true,
-        fileSelectionText = if (isImport) context.getString(R.string.item_title_backup_import_select_file)
-                            else context.getString(R.string.item_title_backup_create_select_file),
+        fileSelectionText = if (isImport) getContext().getString(R.string.item_title_backup_import_select_file)
+                            else getContext().getString(R.string.item_title_backup_create_select_file),
         iconStatus = if (isImport) R.drawable.img_load else R.drawable.img_save,
     )
 
@@ -144,7 +139,7 @@ class BackupViewModel @Inject constructor(
      * @param isImport true for an import, false for an export.
      * @return the loading state.
      */
-    private fun getLoadingState(context: Context, backup: Backup.Loading, isImport: Boolean) = BackupDialogUiState(
+    private fun getLoadingState(backup: Backup.Loading, isImport: Boolean) = BackupDialogUiState(
         fileSelectionVisibility = View.GONE,
         loadingVisibility = View.VISIBLE,
         textStatusVisibility = View.VISIBLE,
@@ -152,12 +147,12 @@ class BackupViewModel @Inject constructor(
         iconStatusVisibility = View.GONE,
         dialogOkButtonEnabled = false,
         dialogCancelButtonEnabled = false,
-        textStatusText = if (isImport) context.getString(R.string.message_backup_import_progress, backup.progress ?: 0)
-                         else context.getString(R.string.message_backup_create_progress, backup.progress ?: 0, backup.maxProgress ?: 0),
+        textStatusText = if (isImport) getContext().getString(R.string.message_backup_import_progress, backup.progress ?: 0)
+                         else getContext().getString(R.string.message_backup_create_progress, backup.progress ?: 0, backup.maxProgress ?: 0),
     )
 
     /** @return Get the verification backup UI state. */
-    private fun getVerificationState(context: Context) = BackupDialogUiState(
+    private fun getVerificationState() = BackupDialogUiState(
         fileSelectionVisibility = View.GONE,
         loadingVisibility = View.VISIBLE,
         textStatusVisibility = View.VISIBLE,
@@ -165,7 +160,7 @@ class BackupViewModel @Inject constructor(
         iconStatusVisibility = View.GONE,
         dialogOkButtonEnabled = false,
         dialogCancelButtonEnabled = false,
-        textStatusText = context.getString(R.string.message_backup_import_verification)
+        textStatusText = getContext().getString(R.string.message_backup_import_verification)
     )
 
     /**
@@ -173,7 +168,7 @@ class BackupViewModel @Inject constructor(
      * @param isImport true for an import, false for an export.
      * @return the error state.
      */
-    private fun getErrorState(context: Context, isImport: Boolean) = BackupDialogUiState(
+    private fun getErrorState(isImport: Boolean) = BackupDialogUiState(
         fileSelectionVisibility = View.GONE,
         loadingVisibility = View.GONE,
         textStatusVisibility = View.VISIBLE,
@@ -181,8 +176,8 @@ class BackupViewModel @Inject constructor(
         iconStatusVisibility = View.VISIBLE,
         dialogOkButtonEnabled = false,
         dialogCancelButtonEnabled = true,
-        textStatusText = if (isImport) context.getString(R.string.message_backup_import_error)
-                         else context.getString(R.string.message_backup_create_error),
+        textStatusText = if (isImport) getContext().getString(R.string.message_backup_import_error)
+                         else getContext().getString(R.string.message_backup_create_error),
         iconStatus = R.drawable.img_error,
         iconTint = Color.RED,
     )
@@ -193,15 +188,15 @@ class BackupViewModel @Inject constructor(
      * @param isImport true for an import, false for an export.
      * @return the completed state.
      */
-    private fun getCompletedState(context: Context, backup: Backup.Completed, isImport: Boolean): BackupDialogUiState {
+    private fun getCompletedState(backup: Backup.Completed, isImport: Boolean): BackupDialogUiState {
         var iconStatus = R.drawable.img_success
         val textStatus = when {
-            !isImport -> context.getString(R.string.message_backup_create_completed)
+            !isImport -> getContext().getString(R.string.message_backup_create_completed)
             backup.failureCount == 0 ->
-                context.getString(R.string.message_backup_import_completed, backup.successCount)
+                getContext().getString(R.string.message_backup_import_completed, backup.successCount)
             else -> {
                 iconStatus = R.drawable.ic_warning
-                context.getString(
+                getContext().getString(
                     R.string.message_backup_import_completed_with_error,
                     backup.successCount,
                     backup.failureCount
@@ -229,6 +224,9 @@ class BackupViewModel @Inject constructor(
             dialogCancelButtonEnabled = false,
         )
     }
+
+    /** @return the Android application context. */
+    private fun getContext() = getApplication<Application>().applicationContext
 }
 
 /** Ui state for the backup dialog. */
@@ -244,8 +242,8 @@ data class BackupDialogUiState(
 
     val fileSelectionText: String? = null,
     val textStatusText: String? = null,
-    @field:DrawableRes val iconStatus: Int? = null,
-    @field:ColorInt val iconTint: Int? = null,
+    @DrawableRes val iconStatus: Int? = null,
+    @ColorInt val iconTint: Int? = null,
 )
 
 /** Zip mime type. */

@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2026 Kevin Buzeau
+/*
+ * Copyright (C) 2023 Kevin Buzeau
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,69 +16,37 @@
  */
 package com.buzbuz.smartautoclicker.feature.tutorial.ui.list
 
-import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 
-import com.buzbuz.smartautoclicker.core.base.data.AppComponentsProvider
-import com.buzbuz.smartautoclicker.core.common.accessibility.domain.LocalAccessibilityServiceConnection
-import com.buzbuz.smartautoclicker.core.common.permissions.PermissionsController
-import com.buzbuz.smartautoclicker.core.common.permissions.model.PermissionAccessibilityService
-import com.buzbuz.smartautoclicker.core.common.permissions.model.PermissionOverlay
-import com.buzbuz.smartautoclicker.core.common.permissions.model.PermissionPostNotification
-import com.buzbuz.smartautoclicker.core.common.tutorial.domain.TutorialRepository
-import com.buzbuz.smartautoclicker.core.settings.domain.SettingsRepository
-import com.buzbuz.smartautoclicker.feature.tutorial.data.mapping.toTutorialItem
-import com.buzbuz.smartautoclicker.feature.tutorial.domain.model.TutorialCategory
-import com.buzbuz.smartautoclicker.feature.tutorial.domain.GetTutorialCategoryUseCase
-import com.buzbuz.smartautoclicker.feature.tutorial.domain.model.TutorialCategoryUiItems
-import com.buzbuz.smartautoclicker.feature.tutorial.domain.model.TutorialCategoryUiState
+import com.buzbuz.smartautoclicker.core.ui.overlays.manager.OverlayManager
+import com.buzbuz.smartautoclicker.feature.tutorial.domain.TutorialRepository
+import com.buzbuz.smartautoclicker.feature.tutorial.domain.model.Tutorial
 
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
-import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
-@HiltViewModel
-class TutorialListViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
-    private val appComponentsProvider: AppComponentsProvider,
-    private val accessibilityServiceConnection: LocalAccessibilityServiceConnection,
-    private val permissionsController: PermissionsController,
-    private val tutorialRepository: TutorialRepository,
-    getTutorialCategoryUseCase: GetTutorialCategoryUseCase,
-) : ViewModel() {
+class TutorialListViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val categoryType: TutorialCategory.Type =
-        TutorialListFragmentArgs.fromSavedStateHandle(savedStateHandle).categoryType
+    private val tutorialRepository: TutorialRepository = TutorialRepository.getTutorialRepository(application)
 
-    val uiState: StateFlow<TutorialCategoryUiState> =
-        getTutorialCategoryUseCase(categoryType)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(3_000), TutorialCategoryUiState.Loading)
+    val items: Flow<List<TutorialItem>> = tutorialRepository.tutorials
+        .map { tutorials ->
+            tutorials
+                .filter { it.isUnlocked }
+                .mapIndexed { index, tutorial -> tutorial.toItem(index) }
+        }
 
-    fun startPermissionFlowIfNeeded(activity: AppCompatActivity, onAllGranted: () -> Unit) {
-        permissionsController.startPermissionsUiFlow(
-            activity = activity,
-            permissions = listOf(
-                PermissionOverlay(),
-                PermissionAccessibilityService(
-                    componentName = appComponentsProvider.klickrServiceComponentName,
-                    isServiceRunning = { accessibilityServiceConnection.isServiceStarted() },
-                ),
-                PermissionPostNotification(optional = true),
-            ),
-            onAllGranted = onAllGranted,
+    private fun Tutorial.toItem(index: Int): TutorialItem =
+        TutorialItem(
+            nameResId = nameResId,
+            descResId = descResId,
+            index = index,
         )
-    }
-
-    fun startTutorial(item: TutorialCategoryUiItems.Item.Tutorial, resultCode: Int, data: Intent) {
-        tutorialRepository.startTutorial(item.type.toTutorialItem().getTutorial(), resultCode, data)
-    }
-
-    fun stopTutorial() {
-        tutorialRepository.stopTutorial()
-    }
 }
+
+data class TutorialItem(
+    val nameResId: Int,
+    val descResId: Int,
+    val index: Int,
+)
