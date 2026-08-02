@@ -61,7 +61,8 @@ interface BitmapManager {
      * Android/data/<application package>/files/capturas.
      *
      * Unlike the condition bitmaps saved with [saveBitmap], captures are not cached in memory nor deduplicated, and
-     * they can't be deleted with [deleteBitmaps].
+     * they can't be deleted with [deleteBitmaps]. The number of saved captures is capped, the oldest ones are
+     * automatically deleted.
      *
      * @param bitmap the bitmap of the screen capture to be saved.
      *

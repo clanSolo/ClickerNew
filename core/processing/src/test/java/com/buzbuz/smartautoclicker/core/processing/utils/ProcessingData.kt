@@ -47,6 +47,9 @@ internal object ProcessingData {
         enabledOnStart = enableOnStart,
     )
 
+    /** Provides unique identifiers for the conditions created with [newCondition]. */
+    private var conditionIdProvider = 0L
+
     /** Instantiates a new condition with only the useful values for the tests. */
     fun newCondition(
         path: String,
@@ -54,8 +57,9 @@ internal object ProcessingData {
         threshold: Int,
         @DetectionType detectionType: Int,
         shouldBeDetected: Boolean = true,
+        id: Long = ++conditionIdProvider,
     ) = Condition(
-        Identifier(1L),
+        Identifier(id),
         Identifier(1L),
         "TOTO",
         path,

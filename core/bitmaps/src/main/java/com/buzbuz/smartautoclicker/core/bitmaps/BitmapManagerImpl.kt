@@ -54,6 +54,8 @@ internal class BitmapManagerImpl(
         private const val SCREEN_CAPTURE_FILE_PREFIX = "captura_"
         /** The extension of the screen capture files. */
         private const val SCREEN_CAPTURE_FILE_EXTENSION = ".png"
+        /** The maximum number of screen captures kept in the capture directory. The oldest ones are deleted. */
+        private const val SCREEN_CAPTURE_MAX_COUNT = 100
         /** The quality used for the PNG compression of the screen captures. */
         private const val SCREEN_CAPTURE_PNG_QUALITY = 100
         /** The format of the date in the screen capture file names. */
@@ -115,11 +117,34 @@ internal class BitmapManagerImpl(
                 FileOutputStream(captureFile).use { stream ->
                     bitmap.compress(Bitmap.CompressFormat.PNG, SCREEN_CAPTURE_PNG_QUALITY, stream)
                 }
+                deleteOldestScreenCaptures(captureDir)
             }
             captureFile.absolutePath
         } catch (ioEx: IOException) {
             Log.e(TAG, "Unable to save screen capture ${captureFile.absolutePath}", ioEx)
             null
+        }
+    }
+
+    /**
+     * Delete the oldest screen captures if they exceed [SCREEN_CAPTURE_MAX_COUNT], in order to keep the storage
+     * usage of the captures bounded. The capture file names start with their timestamp, so ordering them by name
+     * also orders them chronologically.
+     *
+     * @param captureDir the directory containing the screen captures.
+     */
+    private fun deleteOldestScreenCaptures(captureDir: File) {
+        val captures = captureDir.listFiles { file ->
+            file.isFile && file.name.startsWith(SCREEN_CAPTURE_FILE_PREFIX) &&
+                    file.name.endsWith(SCREEN_CAPTURE_FILE_EXTENSION)
+        }?.sortedBy { it.name } ?: return
+
+        val obsoleteCaptureCount = captures.size - SCREEN_CAPTURE_MAX_COUNT
+        if (obsoleteCaptureCount <= 0) return
+
+        Log.d(TAG, "Deleting $obsoleteCaptureCount old screen captures")
+        for (index in 0 until obsoleteCaptureCount) {
+            captures[index].delete()
         }
     }
 

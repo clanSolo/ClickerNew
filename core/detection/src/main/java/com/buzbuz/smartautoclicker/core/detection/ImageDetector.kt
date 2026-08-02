@@ -48,27 +48,39 @@ interface ImageDetector : AutoCloseable {
     fun setupDetection(screenBitmap: Bitmap)
 
     /**
-     * Detect if the bitmap is in the whole current screen bitmap.
-     * [setupDetection] must have been called first with the content of the screen.
+     * Prepare the detection of a condition.
      *
-     * @param conditionBitmap the condition to detect in the screen.
+     * The bitmap of a condition never changes during a detection session, so all detection data depending on it is
+     * precomputed once here instead of at each [detectCondition] call in order to reduce the processing load.
+     * Must be called again for all conditions after each [setScreenMetrics] call, as it invalidates the prepared data.
+     *
+     * @param conditionId the unique identifier of the condition, will be used by the [detectCondition] calls.
+     * @param conditionBitmap the bitmap of the condition.
+     */
+    fun prepareCondition(conditionId: Long, conditionBitmap: Bitmap)
+
+    /**
+     * Detect if the condition is in the whole current screen bitmap.
+     * [setupDetection] and [prepareCondition] must have been called first.
+     *
+     * @param conditionId the unique identifier of the condition, as provided to [prepareCondition].
      * @param threshold the allowed error threshold allowed for the condition.
      *
      * @return the results of the detection.
      */
-    fun detectCondition(conditionBitmap: Bitmap, threshold: Int): DetectionResult
+    fun detectCondition(conditionId: Long, threshold: Int): DetectionResult
 
     /**
-     * Detect if the bitmap is at a specific position in the current screen bitmap.
-     * [setupDetection] must have been called first with the content of the screen.
+     * Detect if the condition is at a specific position in the current screen bitmap.
+     * [setupDetection] and [prepareCondition] must have been called first.
      *
-     * @param conditionBitmap the condition to detect in the screen.
+     * @param conditionId the unique identifier of the condition, as provided to [prepareCondition].
      * @param position the position on the screen where the condition should be detected.
      * @param threshold the allowed error threshold allowed for the condition.
      *
      * @return the results of the detection.
      */
-    fun detectCondition(conditionBitmap: Bitmap, position: Rect, threshold: Int): DetectionResult
+    fun detectCondition(conditionId: Long, position: Rect, threshold: Int): DetectionResult
 }
 
 /** The maximum detection quality for the algorithm. */

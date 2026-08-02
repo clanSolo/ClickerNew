@@ -90,6 +90,12 @@ internal class DetectorEngine(context: Context) {
     private var detectionProgressListener: ProgressListener? = null
 
     /**
+     * Process the detection once every N frames, discarding the frames in between in order to reduce the processing
+     * load. 0 or 1 means all frames are processed.
+     */
+    private var detectionFrameInterval: Int = 0
+
+    /**
      * Start the screen detection.
      *
      * This requires the media projection permission code and its data intent, they both can be retrieved using the
@@ -169,6 +175,7 @@ internal class DetectorEngine(context: Context) {
             imageDetector = detector
 
             detectionProgressListener = progressListener
+            detectionFrameInterval = scenario.detectionFrameInterval
             progressListener?.onSessionStarted(context, scenario, events)
 
             scenarioProcessor = ScenarioProcessor(
@@ -183,7 +190,6 @@ internal class DetectorEngine(context: Context) {
                 onStopRequested = { stopDetection() },
                 progressListener  = progressListener,
                 detectionCaptureListener = buildDetectionCaptureListener(context, scenario),
-                detectionFrameInterval = scenario.detectionFrameInterval,
             )
 
             processScreenImages()
@@ -202,7 +208,13 @@ internal class DetectorEngine(context: Context) {
         if (!scenario.detectionCaptureEnabled) return null
 
         val bitmapManager = BitmapManager.getBitmapManager(context)
-        return { screenFrame ->
+        var lastCaptureTimestamp = 0L
+        return listener@{ screenFrame ->
+            // Throttle the captures to avoid spamming the device storage and the CPU when detections are frequent
+            val now = System.currentTimeMillis()
+            if (now - lastCaptureTimestamp < SCREEN_CAPTURE_MIN_INTERVAL_MS) return@listener
+            lastCaptureTimestamp = now
+
             // The screen frame bitmap is reused by the recorder for the next screen images, copy it before saving
             // it asynchronously on the processing scope.
             val frameCopy = Bitmap.createBitmap(screenFrame)
@@ -260,6 +272,7 @@ internal class DetectorEngine(context: Context) {
             scenarioProcessor = null
             detectionProgressListener?.onSessionEnded()
             detectionProgressListener = null
+            detectionFrameInterval = 0
 
             _state.emit(DetectorState.RECORDING)
             processingShutdownJob = null
@@ -298,14 +311,25 @@ internal class DetectorEngine(context: Context) {
         }
     }
 
-    /** Process the latest images provided by the [DisplayRecorder]. */
+    /** Process the latest images provided by the [DisplayRecorder], skipping frames according to [detectionFrameInterval]. */
     private suspend fun processScreenImages() {
         _state.emit(DetectorState.DETECTING)
 
         scenarioProcessor?.invalidateScreenMetrics()
+
+        // The number of frames to discard before the next processed one
+        var framesToSkip = 0
         while (processingJob?.isActive == true) {
+            // Discard the frames skipped due to the detection frame interval directly from the recorder, without
+            // copying their pixels. This avoids an useless full screen bitmap copy per skipped frame.
+            if (framesToSkip > 0) {
+                if (displayRecorder.discardLatestFrame()) framesToSkip-- else delay(NO_IMAGE_DELAY_MS)
+                continue
+            }
+
             displayRecorder.acquireLatestBitmap()?.let { screenFrame ->
                 scenarioProcessor?.process(screenFrame)
+                if (detectionFrameInterval > 1) framesToSkip = detectionFrameInterval - 1
             } ?: delay(NO_IMAGE_DELAY_MS)
         }
     }
@@ -363,6 +387,12 @@ internal enum class DetectorState {
  * This is to avoid spamming when there is no image.
  */
 private const val NO_IMAGE_DELAY_MS = 20L
+
+/**
+ * Minimum delay between two saved screen captures.
+ * This prevents filling the device storage and overloading the CPU when detections are frequent.
+ */
+private const val SCREEN_CAPTURE_MIN_INTERVAL_MS = 1000L
 
 /** Tag for logs. */
 private const val TAG = "DetectorEngine"

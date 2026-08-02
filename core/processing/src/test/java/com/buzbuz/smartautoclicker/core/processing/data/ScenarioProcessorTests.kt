@@ -129,12 +129,13 @@ class ScenarioProcessorTests {
         val conditionBitmap = mock(Bitmap::class.java)
         mockWhen(mockBitmapSupplier.getBitmap(path, area.width(), area.height())).thenReturn(conditionBitmap)
 
+        val condition = newCondition(path, area, threshold, detectionType, shouldBeOnScreen)
         val pass = if (isDetected) TEST_DETECTION_OK else TEST_DETECTION_KO
         when (detectionType) {
-            EXACT -> mockWhen(mockImageDetector.detectCondition(conditionBitmap, area, threshold)).thenReturn(pass)
-            WHOLE_SCREEN -> mockWhen(mockImageDetector.detectCondition(conditionBitmap, threshold)).thenReturn(pass)
+            EXACT -> mockWhen(mockImageDetector.detectCondition(condition.id.databaseId, area, threshold)).thenReturn(pass)
+            WHOLE_SCREEN -> mockWhen(mockImageDetector.detectCondition(condition.id.databaseId, threshold)).thenReturn(pass)
         }
-        return newCondition(path, area, threshold, detectionType, shouldBeOnScreen)
+        return condition
     }
 
     /** */
