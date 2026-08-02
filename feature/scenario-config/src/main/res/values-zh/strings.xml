@@ -96,6 +96,7 @@
     <string name="item_title_swipe">滑动</string>
     <string name="item_title_toggle_event">修改场景状态</string>
     <string name="item_title_capture">屏幕截图</string>
+    <string name="item_desc_capture">将屏幕截图保存到设备存储</string>
 
     <!--
       - Empty list messages.

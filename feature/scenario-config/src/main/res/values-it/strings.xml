@@ -95,6 +95,7 @@
     <string name="item_title_swipe">Scorri</string>
     <string name="item_title_toggle_event">Cambia stato evento</string>
     <string name="item_title_capture">Cattura schermo</string>
+    <string name="item_desc_capture">Salva una cattura dello schermo sul dispositivo</string>
 
     <!--
       - Empty list messages.

@@ -96,6 +96,7 @@
     <string name="item_title_swipe">Swipe</string>
     <string name="item_title_toggle_event">Change event state</string>
     <string name="item_title_capture">Take capture</string>
+    <string name="item_desc_capture">Save a screen capture on the device storage</string>
 
     <!--
       - Empty list messages.
