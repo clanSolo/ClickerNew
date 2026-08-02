@@ -204,6 +204,11 @@
     <string name="dropdown_item_title_anti_detection_disabled">Disabilitato</string>
     <string name="dropdown_helper_text_anti_detection_enabled">Rendi la durata e posizione dei clic e scorrimenti casuali rispetto ad un piccolo intervallo</string>
     <string name="dropdown_helper_text_anti_detection_disabled">Esegui tutte le azioni come dichiarate</string>
+    <string name="input_field_label_detection_capture">Cattura schermata</string>
+    <string name="dropdown_item_title_detection_capture_enabled">Abilitata</string>
+    <string name="dropdown_item_title_detection_capture_disabled">Disabilitata</string>
+    <string name="dropdown_helper_text_detection_capture_enabled">Salva una cattura completa dello schermo in Android/data/com.buzbuz.smartautoclicker/files/capturas a ogni evento rilevato</string>
+    <string name="dropdown_helper_text_detection_capture_disabled">Nessuna cattura dello schermo viene salvata quando viene rilevato un evento</string>
 
     <!-- Dropdown field for selecting the event state -->
     <string name="dropdown_item_title_event_state_enabled">Abilitato</string>

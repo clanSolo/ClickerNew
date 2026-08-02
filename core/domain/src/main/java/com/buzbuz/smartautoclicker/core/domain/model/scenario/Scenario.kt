@@ -31,6 +31,7 @@ import com.buzbuz.smartautoclicker.core.domain.model.Identifier
  *                             value of [com.buzbuz.smartautoclicker.domain.ConditionOperator].
  * @param randomize tells if the actions values should be randomized a bit.
  * @param eventCount the number of events in this scenario. Default value is 0.
+ * @param detectionCaptureEnabled tells if a full screen capture should be saved each time an event is detected.
  */
 data class Scenario(
     val id: Identifier,
@@ -39,4 +40,5 @@ data class Scenario(
     @ConditionOperator val endConditionOperator: Int,
     val randomize: Boolean = false,
     val eventCount: Int = 0,
+    val detectionCaptureEnabled: Boolean = false,
 )

@@ -181,9 +181,30 @@ internal class DetectorEngine(context: Context) {
                 endConditions =  endConditions,
                 onStopRequested = { stopDetection() },
                 progressListener  = progressListener,
+                detectionCaptureListener = buildDetectionCaptureListener(context, scenario),
             )
 
             processScreenImages()
+        }
+    }
+
+    /**
+     * Build the listener saving a capture of the screen frame when an event is detected, if enabled for this scenario.
+     *
+     * @param context the Android context.
+     * @param scenario the scenario to be detected.
+     *
+     * @return the capture listener, or null if the captures are disabled for this scenario.
+     */
+    private fun buildDetectionCaptureListener(context: Context, scenario: Scenario): ((Bitmap) -> Unit)? {
+        if (!scenario.detectionCaptureEnabled) return null
+
+        val captureSaver = CaptureSaver(context)
+        return { screenFrame ->
+            // The screen frame bitmap is reused by the recorder for the next screen images, copy it before saving
+            // it asynchronously on the processing scope.
+            val frameCopy = Bitmap.createBitmap(screenFrame)
+            processingScope?.launch { captureSaver.save(frameCopy) }
         }
     }
 

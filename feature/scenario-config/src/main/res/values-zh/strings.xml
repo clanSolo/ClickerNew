@@ -205,6 +205,11 @@
     <string name="dropdown_item_title_anti_detection_disabled">禁用</string>
     <string name="dropdown_helper_text_anti_detection_enabled">在单击、滑动和等待中，增加一个很小的随机值，使点击、滑动的坐标以及延迟时间有一定的差异。</string>
     <string name="dropdown_helper_text_anti_detection_disabled">不启用防作弊，按照设置的值执行</string>
+    <string name="input_field_label_detection_capture">屏幕截图</string>
+    <string name="dropdown_item_title_detection_capture_enabled">启用</string>
+    <string name="dropdown_item_title_detection_capture_disabled">禁用</string>
+    <string name="dropdown_helper_text_detection_capture_enabled">每次检测到事件时，将完整屏幕截图保存到 Android/data/com.buzbuz.smartautoclicker/files/capturas</string>
+    <string name="dropdown_helper_text_detection_capture_disabled">检测到事件时不保存屏幕截图</string>
 
     <!-- Dropdown field for selecting the event state -->
     <string name="dropdown_item_title_event_state_enabled">启用</string>

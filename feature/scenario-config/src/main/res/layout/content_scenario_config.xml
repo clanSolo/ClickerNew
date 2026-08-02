@@ -46,10 +46,20 @@
             android:id="@+id/scenario_action_randomization"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/margin_vertical_large"
+            android:layout_marginBottom="@dimen/margin_horizontal_small"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/scenario_name_field"
+            app:layout_constraintBottom_toTopOf="@id/scenario_detection_capture"/>
+
+        <include layout="@layout/include_input_field_dropdown"
+            android:id="@+id/scenario_detection_capture"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/margin_vertical_large"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/scenario_action_randomization"
             app:layout_constraintBottom_toTopOf="@id/detection_quality_card"/>
 
         <com.google.android.material.card.MaterialCardView
@@ -59,7 +69,7 @@
             android:layout_height="wrap_content"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/scenario_name_field"
+            app:layout_constraintTop_toBottomOf="@id/scenario_detection_capture"
             app:layout_constraintBottom_toTopOf="@id/end_conditions_card">
 
             <androidx.constraintlayout.widget.ConstraintLayout

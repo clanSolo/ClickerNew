@@ -83,6 +83,12 @@ class ScenarioConfigContent(appContext: Context) : NavBarDialogContent(appContex
                 onItemSelected = viewModel::setConditionOperator,
             )
 
+            scenarioDetectionCapture.setItems(
+                items = viewModel.detectionCaptureItems,
+                onItemSelected = viewModel::setDetectionCapture,
+                label = context.resources.getString(R.string.input_field_label_detection_capture),
+            )
+
             endConditionAdapter = EndConditionAdapter(
                 addEndConditionClickedListener = ::onAddEndConditionClicked,
                 endConditionClickedListener = ::showEndConditionDialog,
@@ -114,6 +120,7 @@ class ScenarioConfigContent(appContext: Context) : NavBarDialogContent(appContex
                 launch { viewModel.scenarioNameError.collect(viewBinding.scenarioNameField::setError) }
                 launch { viewModel.randomizationDropdownState.collect(::updateRandomizationDropdown) }
                 launch { viewModel.randomization.collect(::updateRandomization) }
+                launch { viewModel.detectionCapture.collect(::updateDetectionCapture) }
                 launch { viewModel.isProModePurchased.collect(::updateProModeFeaturesUi) }
                 launch { viewModel.detectionQuality.collect(::updateQuality) }
                 launch { viewModel.endConditionOperator.collect(::updateEndConditionOperator) }
@@ -147,6 +154,10 @@ class ScenarioConfigContent(appContext: Context) : NavBarDialogContent(appContex
 
     private fun updateRandomization(randomizationItem: DropdownItem) {
         viewBinding.scenarioActionRandomization.setSelectedItem(randomizationItem)
+    }
+
+    private fun updateDetectionCapture(detectionCaptureItem: DropdownItem) {
+        viewBinding.scenarioDetectionCapture.setSelectedItem(detectionCaptureItem)
     }
 
     private fun updateProModeFeaturesUi(isEnabled: Boolean) {

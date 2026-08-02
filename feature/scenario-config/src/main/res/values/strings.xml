@@ -205,6 +205,11 @@
     <string name="dropdown_item_title_anti_detection_disabled">Disabled</string>
     <string name="dropdown_helper_text_anti_detection_enabled">Randomize the click swipe and pause positions and durations by a small random offset</string>
     <string name="dropdown_helper_text_anti_detection_disabled">Execute all actions as declared</string>
+    <string name="input_field_label_detection_capture">Take capture</string>
+    <string name="dropdown_item_title_detection_capture_enabled">Enabled</string>
+    <string name="dropdown_item_title_detection_capture_disabled">Disabled</string>
+    <string name="dropdown_helper_text_detection_capture_enabled">Save a full screen capture in Android/data/com.buzbuz.smartautoclicker/files/capturas each time an event is detected</string>
+    <string name="dropdown_helper_text_detection_capture_disabled">No screen capture is saved when an event is detected</string>
 
     <!-- Dropdown field for selecting the event state -->
     <string name="dropdown_item_title_event_state_enabled">Enabled</string>
