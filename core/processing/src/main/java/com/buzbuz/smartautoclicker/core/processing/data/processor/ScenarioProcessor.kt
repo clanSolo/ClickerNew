@@ -53,6 +53,8 @@ import kotlinx.coroutines.yield
  * @param progressListener the object to notify for detection progress. Can be null if not required.
  * @param detectionCaptureListener invoked with the current screen frame each time an event is detected, before its
  * actions are executed. Can be null if captures are disabled.
+ * @param detectionFrameInterval run the detection once every N frames, ignoring the frames in between in order to
+ * reduce the processing load. 0 or 1 means all frames are processed.
  */
 internal class ScenarioProcessor(
     private val imageDetector: ImageDetector,
@@ -66,6 +68,7 @@ internal class ScenarioProcessor(
     private val onStopRequested: () -> Unit,
     private val progressListener: ProgressListener? = null,
     private val detectionCaptureListener: ((Bitmap) -> Unit)? = null,
+    private val detectionFrameInterval: Int = 0,
 ) {
 
     /** Handle the processing state of the scenario. */
@@ -76,6 +79,9 @@ internal class ScenarioProcessor(
     private val endConditionVerifier = EndConditionVerifier(endConditions, endConditionOperator, onStopRequested)
     /** Keep track of the detection results during the processing. */
     private val processingResults = ProcessingResults(events)
+
+    /** The number of frames received since the last processed detection. */
+    private var framesSinceLastDetection = 0
 
     /** Tells if the screen metrics have been invalidated and should be updated. */
     private var invalidateScreenMetrics = true
@@ -93,6 +99,10 @@ internal class ScenarioProcessor(
      * @return the first Event with all conditions fulfilled, or null if none has been found.
      */
     suspend fun process(screenFrame: Bitmap) {
+        // Skip the frames according to the detection frame interval to reduce the processing load
+        if (detectionFrameInterval > 1 && ++framesSinceLastDetection < detectionFrameInterval) return
+        framesSinceLastDetection = 0
+
         // No more events enabled, there is nothing more to do. Stop the detection.
         if (scenarioState.areAllEventsDisabled()) {
             onStopRequested()

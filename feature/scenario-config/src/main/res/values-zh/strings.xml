@@ -210,6 +210,8 @@
     <string name="dropdown_item_title_detection_capture_disabled">禁用</string>
     <string name="dropdown_helper_text_detection_capture_enabled">每次检测到事件时，将完整屏幕截图保存到 Android/data/com.buzbuz.smartautoclicker/files/capturas</string>
     <string name="dropdown_helper_text_detection_capture_disabled">检测到事件时不保存屏幕截图</string>
+    <string name="section_title_detection_interval">检测间隔</string>
+    <string name="message_detection_interval_description">每 N 帧检测一次。0 处理所有帧</string>
 
     <!-- Dropdown field for selecting the event state -->
     <string name="dropdown_item_title_event_state_enabled">启用</string>

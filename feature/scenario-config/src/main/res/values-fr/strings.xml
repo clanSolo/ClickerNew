@@ -212,6 +212,8 @@
     <string name="dropdown_item_title_detection_capture_disabled">Désactivée</string>
     <string name="dropdown_helper_text_detection_capture_enabled">Enregistre une capture d\'écran complète dans Android/data/com.buzbuz.smartautoclicker/files/capturas à chaque événement détecté</string>
     <string name="dropdown_helper_text_detection_capture_disabled">Aucune capture d\'écran n\'est enregistrée lorsqu\'un événement est détecté</string>
+    <string name="section_title_detection_interval">Intervalle de détection</string>
+    <string name="message_detection_interval_description">Détecte une fois toutes les N images. 0 traite toutes les images</string>
 
     <!-- Dropdown field for selecting the event state -->
     <string name="dropdown_item_title_event_state_enabled">Activé</string>

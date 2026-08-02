@@ -39,6 +39,8 @@ import kotlinx.serialization.Serializable
  *                  order to avoid behaving like a bot.
  * @param detectionCaptureEnabled if true, a full screen capture is saved in the application external files directory
  *                                each time an event is detected.
+ * @param detectionFrameInterval run the detection once every N frames, ignoring the frames in between in order to
+ *                               reduce the processing load. 0 means all frames are processed.
  */
 @Entity(tableName = "scenario_table")
 @Serializable
@@ -49,6 +51,7 @@ data class ScenarioEntity(
     @ColumnInfo(name = "end_condition_operator") val endConditionOperator: Int,
     @ColumnInfo(name = "randomize", defaultValue="0") val randomize: Boolean = false,
     @ColumnInfo(name = "detection_capture_enabled", defaultValue="0") val detectionCaptureEnabled: Boolean = false,
+    @ColumnInfo(name = "detection_frame_interval", defaultValue="0") val detectionFrameInterval: Int = 0,
 )
 
 /**

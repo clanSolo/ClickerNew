@@ -210,6 +210,8 @@
     <string name="dropdown_item_title_detection_capture_disabled">Disabled</string>
     <string name="dropdown_helper_text_detection_capture_enabled">Save a full screen capture in Android/data/com.buzbuz.smartautoclicker/files/capturas each time an event is detected</string>
     <string name="dropdown_helper_text_detection_capture_disabled">No screen capture is saved when an event is detected</string>
+    <string name="section_title_detection_interval">Detection interval</string>
+    <string name="message_detection_interval_description">Detect once every N frames. 0 processes all frames</string>
 
     <!-- Dropdown field for selecting the event state -->
     <string name="dropdown_item_title_event_state_enabled">Enabled</string>
