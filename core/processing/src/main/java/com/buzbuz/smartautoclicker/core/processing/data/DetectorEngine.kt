@@ -218,8 +218,21 @@ internal class DetectorEngine(context: Context) {
             lastCaptureTimestamp = now
 
             // The screen frame bitmap is reused by the recorder for the next screen images, copy it before saving
-            // it asynchronously on the processing scope.
-            val frameCopy = Bitmap.createBitmap(screenFrame)
+            // it asynchronously on the processing scope. The frame can be wider than the display due to the image
+            // row stride padding (invalid pixels on the right columns), crop it to the display size.
+            val displaySize = displayMetrics.screenSize
+            val frameCopy =
+                if (displaySize.x > 0 && displaySize.y > 0 &&
+                    (screenFrame.width > displaySize.x || screenFrame.height > displaySize.y)
+                ) {
+                    Bitmap.createBitmap(
+                        screenFrame, 0, 0,
+                        minOf(screenFrame.width, displaySize.x),
+                        minOf(screenFrame.height, displaySize.y),
+                    )
+                } else {
+                    Bitmap.createBitmap(screenFrame)
+                }
             processingScope?.launch { bitmapManager.saveScreenCapture(frameCopy) }
         }
     }
