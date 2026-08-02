@@ -22,17 +22,6 @@ android {
         }
     }
 
-    // Specifies one flavor dimension.
-    flavorDimensions += "version"
-    productFlavors {
-        create("fDroid") {
-            dimension = "version"
-        }
-        create("playStore") {
-            dimension = "version"
-        }
-    }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17

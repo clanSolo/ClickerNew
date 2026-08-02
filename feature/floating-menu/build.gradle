@@ -22,17 +22,6 @@ android {
         }
     }
 
-    // Specifies one flavor dimension.
-    flavorDimensions += "version"
-    productFlavors {
-        create("fDroid") {
-            dimension = "version"
-        }
-        create("playStore") {
-            dimension = "version"
-        }
-    }
-
     buildFeatures {
         viewBinding true
     }
