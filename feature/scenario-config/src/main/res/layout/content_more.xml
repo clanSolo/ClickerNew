@@ -24,7 +24,7 @@
     android:layout_marginHorizontal="@dimen/margin_horizontal_default">
 
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/debug_card"
+        android:id="@+id/tutorial_card"
         style="@style/AppTheme.Widget.Card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -32,6 +32,61 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="@dimen/margin_horizontal_default"
+            android:layout_marginVertical="@dimen/margin_vertical_large">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tutorial_title"
+                style="@style/AppTheme.TextAppearance.CardTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:text="@string/section_title_tutorial" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tutorial_text"
+                style="@style/AppTheme.TextAppearance.Body"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_vertical_small"
+                app:layout_constraintTop_toBottomOf="@id/tutorial_title"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/tutorial_chevron"
+                android:maxLines="2"
+                android:text="@string/message_tutorial_start"/>
+
+            <ImageView
+                android:id="@+id/tutorial_chevron"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/tutorial_text"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_chevron"
+                tools:ignore="ContentDescription"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/debug_card"
+        style="@style/AppTheme.Widget.Card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="@dimen/margin_vertical_large"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tutorial_card">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"

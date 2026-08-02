@@ -52,7 +52,7 @@ class ConditionViewModel(application: Application) : AndroidViewModel(applicatio
     private val repository = Repository.getRepository(application)
     /** Repository providing access to the edited items. */
     private val editionRepository = EditionRepository.getInstance(application)
-    /** Monitors the views. */
+    /** Monitor the views fot the tutorial. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
     /** The condition being configured by the user. */

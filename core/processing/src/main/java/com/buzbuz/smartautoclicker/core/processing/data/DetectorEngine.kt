@@ -23,12 +23,10 @@ import android.media.Image
 import android.media.projection.MediaProjectionManager
 import android.util.Log
 
-import com.buzbuz.smartautoclicker.core.bitmaps.BitmapManager
 import com.buzbuz.smartautoclicker.core.display.DisplayRecorder
 import com.buzbuz.smartautoclicker.core.display.DisplayMetrics
 import com.buzbuz.smartautoclicker.core.detection.ImageDetector
 import com.buzbuz.smartautoclicker.core.detection.NativeDetector
-import com.buzbuz.smartautoclicker.core.domain.model.action.Action
 import com.buzbuz.smartautoclicker.core.domain.model.endcondition.EndCondition
 import com.buzbuz.smartautoclicker.core.domain.model.event.Event
 import com.buzbuz.smartautoclicker.core.domain.model.scenario.Scenario
@@ -89,12 +87,6 @@ internal class DetectorEngine(context: Context) {
      * Defined at detection start, reset to null at detection end.
      */
     private var detectionProgressListener: ProgressListener? = null
-
-    /**
-     * Process the detection once every N frames, discarding the frames in between in order to reduce the processing
-     * load. 0 or 1 means all frames are processed.
-     */
-    private var detectionFrameInterval: Int = 0
 
     /**
      * Start the screen detection.
@@ -176,7 +168,6 @@ internal class DetectorEngine(context: Context) {
             imageDetector = detector
 
             detectionProgressListener = progressListener
-            detectionFrameInterval = scenario.detectionFrameInterval
             progressListener?.onSessionStarted(context, scenario, events)
 
             scenarioProcessor = ScenarioProcessor(
@@ -190,50 +181,9 @@ internal class DetectorEngine(context: Context) {
                 endConditions =  endConditions,
                 onStopRequested = { stopDetection() },
                 progressListener  = progressListener,
-                screenCaptureExecutor = buildScreenCaptureExecutor(context, events),
             )
 
             processScreenImages()
-        }
-    }
-
-    /**
-     * Build the executor saving a capture of the screen frame when a capture action is executed, if any event of the
-     * scenario contains a capture action.
-     *
-     * @param context the Android context.
-     * @param events the events of the scenario to be detected.
-     *
-     * @return the capture executor, or null if no capture actions are present in the events.
-     */
-    private fun buildScreenCaptureExecutor(context: Context, events: List<Event>): ((Bitmap) -> Unit)? {
-        if (events.none { event -> event.actions.any { action -> action is Action.Capture } }) return null
-
-        val bitmapManager = BitmapManager.getBitmapManager(context)
-        var lastCaptureTimestamp = 0L
-        return executor@{ screenFrame ->
-            // Throttle the captures to avoid spamming the device storage and the CPU when captures are frequent
-            val now = System.currentTimeMillis()
-            if (now - lastCaptureTimestamp < SCREEN_CAPTURE_MIN_INTERVAL_MS) return@executor
-            lastCaptureTimestamp = now
-
-            // The screen frame bitmap is reused by the recorder for the next screen images, copy it before saving
-            // it asynchronously on the processing scope. The frame can be wider than the display due to the image
-            // row stride padding (invalid pixels on the right columns), crop it to the display size.
-            val displaySize = displayMetrics.screenSize
-            val frameCopy =
-                if (displaySize.x > 0 && displaySize.y > 0 &&
-                    (screenFrame.width > displaySize.x || screenFrame.height > displaySize.y)
-                ) {
-                    Bitmap.createBitmap(
-                        screenFrame, 0, 0,
-                        minOf(screenFrame.width, displaySize.x),
-                        minOf(screenFrame.height, displaySize.y),
-                    )
-                } else {
-                    Bitmap.createBitmap(screenFrame)
-                }
-            processingScope?.launch { bitmapManager.saveScreenCapture(frameCopy) }
         }
     }
 
@@ -287,7 +237,6 @@ internal class DetectorEngine(context: Context) {
             scenarioProcessor = null
             detectionProgressListener?.onSessionEnded()
             detectionProgressListener = null
-            detectionFrameInterval = 0
 
             _state.emit(DetectorState.RECORDING)
             processingShutdownJob = null
@@ -326,25 +275,14 @@ internal class DetectorEngine(context: Context) {
         }
     }
 
-    /** Process the latest images provided by the [DisplayRecorder], skipping frames according to [detectionFrameInterval]. */
+    /** Process the latest images provided by the [DisplayRecorder]. */
     private suspend fun processScreenImages() {
         _state.emit(DetectorState.DETECTING)
 
         scenarioProcessor?.invalidateScreenMetrics()
-
-        // The number of frames to discard before the next processed one
-        var framesToSkip = 0
         while (processingJob?.isActive == true) {
-            // Discard the frames skipped due to the detection frame interval directly from the recorder, without
-            // copying their pixels. This avoids an useless full screen bitmap copy per skipped frame.
-            if (framesToSkip > 0) {
-                if (displayRecorder.discardLatestFrame()) framesToSkip-- else delay(NO_IMAGE_DELAY_MS)
-                continue
-            }
-
             displayRecorder.acquireLatestBitmap()?.let { screenFrame ->
                 scenarioProcessor?.process(screenFrame)
-                if (detectionFrameInterval > 1) framesToSkip = detectionFrameInterval - 1
             } ?: delay(NO_IMAGE_DELAY_MS)
         }
     }
@@ -402,12 +340,6 @@ internal enum class DetectorState {
  * This is to avoid spamming when there is no image.
  */
 private const val NO_IMAGE_DELAY_MS = 20L
-
-/**
- * Minimum delay between two saved screen captures.
- * This prevents filling the device storage and overloading the CPU when detections are frequent.
- */
-private const val SCREEN_CAPTURE_MIN_INTERVAL_MS = 1000L
 
 /** Tag for logs. */
 private const val TAG = "DetectorEngine"

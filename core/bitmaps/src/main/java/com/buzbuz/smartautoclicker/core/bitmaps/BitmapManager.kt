@@ -36,10 +36,7 @@ interface BitmapManager {
          */
         fun getBitmapManager(context: Context): BitmapManager {
             return INSTANCE ?: synchronized(this) {
-                val instance = BitmapManagerImpl(
-                    appDataDir = context.filesDir,
-                    screenCaptureDir = context.getExternalFilesDir(SCREEN_CAPTURE_DIRECTORY_NAME),
-                )
+                val instance = BitmapManagerImpl(context.filesDir)
                 INSTANCE = instance
                 instance
             }
@@ -55,20 +52,6 @@ interface BitmapManager {
      * @return the path of the bitmap.
      */
     suspend fun saveBitmap(bitmap: Bitmap, prefix: String = CONDITION_FILE_PREFIX) : String
-
-    /**
-     * Save the provided screen capture as a PNG file in the application specific external files directory, at
-     * Android/data/<application package>/files/capturas.
-     *
-     * Unlike the condition bitmaps saved with [saveBitmap], captures are not cached in memory nor deduplicated, and
-     * they can't be deleted with [deleteBitmaps]. The number of saved captures is capped, the oldest ones are
-     * automatically deleted.
-     *
-     * @param bitmap the bitmap of the screen capture to be saved.
-     *
-     * @return the path of the saved capture file, or null if the capture couldn't be saved.
-     */
-    suspend fun saveScreenCapture(bitmap: Bitmap) : String?
 
     /**
      * Load a bitmap.
@@ -96,5 +79,5 @@ interface BitmapManager {
 
 /** The prefix appended to all bitmap file names. */
 const val CONDITION_FILE_PREFIX = "Condition_"
-/** The name of the directory containing the screen captures, in the app specific external files directory. */
-const val SCREEN_CAPTURE_DIRECTORY_NAME = "capturas"
+/** The prefix appended to all bitmap file names. */
+const val TUTORIAL_CONDITION_FILE_PREFIX = "Tutorial_Condition_"

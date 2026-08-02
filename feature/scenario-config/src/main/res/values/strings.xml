@@ -32,7 +32,6 @@
     <string name="dialog_overlay_title_event_selection">Select an event</string>
     <string name="dialog_overlay_title_intent">Intent</string>
     <string name="dialog_overlay_title_pause">Wait</string>
-    <string name="dialog_overlay_title_capture">Capture</string>
     <string name="dialog_overlay_title_scenario_config">Scenario</string>
     <string name="dialog_overlay_title_swipe">Swipe</string>
     <string name="dialog_overlay_title_toggle_event">Event state</string>
@@ -77,7 +76,6 @@
     <string name="item_desc_swipe_positions">Swipe from %1$d, %2$d to %3$d, %4$d</string>
     <string name="item_desc_toggle_event">Change the enabled state of an event</string>
     <string name="item_desc_toggle_event_details">Change event state with type %1$s</string>
-    <string name="item_desc_capture_details">Save a full screen capture in Android/data/com.buzbuz.smartautoclicker/files/capturas</string>
     <string name="item_error_action_invalid_generic">This action is invalid</string>
     <string name="item_error_action_invalid_toggle_event_target">Target event not found</string>
     <string name="item_title_click">Click</string>
@@ -95,8 +93,6 @@
     <string name="item_title_pause">Wait</string>
     <string name="item_title_swipe">Swipe</string>
     <string name="item_title_toggle_event">Change event state</string>
-    <string name="item_title_capture">Take capture</string>
-    <string name="item_desc_capture">Save a screen capture on the device storage</string>
 
     <!--
       - Empty list messages.
@@ -209,8 +205,6 @@
     <string name="dropdown_item_title_anti_detection_disabled">Disabled</string>
     <string name="dropdown_helper_text_anti_detection_enabled">Randomize the click swipe and pause positions and durations by a small random offset</string>
     <string name="dropdown_helper_text_anti_detection_disabled">Execute all actions as declared</string>
-    <string name="section_title_detection_interval">Detection interval</string>
-    <string name="message_detection_interval_description">Detect once every N frames. 0 processes all frames</string>
 
     <!-- Dropdown field for selecting the event state -->
     <string name="dropdown_item_title_event_state_enabled">Enabled</string>

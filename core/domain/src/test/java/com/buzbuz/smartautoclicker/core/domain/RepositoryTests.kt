@@ -21,6 +21,7 @@ import android.os.Build
 
 import com.buzbuz.smartautoclicker.core.bitmaps.BitmapManager
 import com.buzbuz.smartautoclicker.core.database.ClickDatabase
+import com.buzbuz.smartautoclicker.core.database.TutorialDatabase
 import com.buzbuz.smartautoclicker.core.database.dao.ConditionDao
 import com.buzbuz.smartautoclicker.core.database.dao.EndConditionDao
 import com.buzbuz.smartautoclicker.core.database.dao.EventDao
@@ -63,6 +64,12 @@ class RepositoryTests {
     @Mock private lateinit var mockConditionDao: ConditionDao
     @Mock private lateinit var mockEndConditionDao: EndConditionDao
 
+    @Mock private lateinit var mockTutoDatabase: TutorialDatabase
+    @Mock private lateinit var mockTutoScenarioDao: ScenarioDao
+    @Mock private lateinit var mockTutoEventDao: EventDao
+    @Mock private lateinit var mockTutoConditionDao: ConditionDao
+    @Mock private lateinit var mockTutoEndConditionDao: EndConditionDao
+
     /** Object under tests. */
     private lateinit var repository: RepositoryImpl
 
@@ -78,7 +85,12 @@ class RepositoryTests {
         mockWhen(mockDatabase.conditionDao()).thenReturn(mockConditionDao)
         mockWhen(mockDatabase.endConditionDao()).thenReturn(mockEndConditionDao)
 
-        repository = RepositoryImpl(mockDatabase, mockBitmapManager)
+        mockWhen(mockTutoDatabase.scenarioDao()).thenReturn(mockTutoScenarioDao)
+        mockWhen(mockTutoDatabase.eventDao()).thenReturn(mockTutoEventDao)
+        mockWhen(mockTutoDatabase.conditionDao()).thenReturn(mockTutoConditionDao)
+        mockWhen(mockTutoDatabase.endConditionDao()).thenReturn(mockTutoEndConditionDao)
+
+        repository = RepositoryImpl(mockDatabase, mockTutoDatabase, mockBitmapManager)
         clearInvocations(mockScenarioDao, mockEventDao, mockConditionDao, mockEndConditionDao)
     }
 

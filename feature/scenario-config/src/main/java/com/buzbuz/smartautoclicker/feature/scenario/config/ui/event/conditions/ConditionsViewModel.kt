@@ -45,7 +45,7 @@ class ConditionsViewModel(application: Application) : AndroidViewModel(applicati
     private val editionRepository = EditionRepository.getInstance(application)
     /** The repository for the pro mode billing. */
     private val billingRepository = IBillingRepository.getRepository(application)
-    /** Monitors views. */
+    /** Monitors views for the tutorial. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
     /** Currently configured event. */

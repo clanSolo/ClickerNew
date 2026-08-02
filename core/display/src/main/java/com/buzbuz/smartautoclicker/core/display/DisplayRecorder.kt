@@ -171,19 +171,6 @@ class DisplayRecorder internal constructor() {
         }
     }
 
-    /**
-     * Discard the latest image of the screen without copying its pixels.
-     * Use it to skip frames at a low cost, the memory copy of [acquireLatestBitmap] is not executed.
-     *
-     * @return true if an image was discarded, false if no new image was available.
-     */
-    suspend fun discardLatestFrame(): Boolean = mutex.withLock {
-        imageReader?.acquireLatestImage()?.let { image ->
-            image.close()
-            true
-        } ?: false
-    }
-
     suspend fun takeScreenshot(area: Rect, completion: suspend (Bitmap) -> Unit) {
         var screenFrame: Bitmap?
         do {

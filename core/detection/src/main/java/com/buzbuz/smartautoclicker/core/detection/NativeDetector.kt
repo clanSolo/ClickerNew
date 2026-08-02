@@ -67,23 +67,17 @@ class NativeDetector : ImageDetector {
         setScreenImage(screenBitmap)
     }
 
-    override fun prepareCondition(conditionId: Long, conditionBitmap: Bitmap) {
-        if (isClosed) return
-
-        nativePrepareCondition(conditionId, conditionBitmap)
-    }
-
-    override fun detectCondition(conditionId: Long, threshold: Int): DetectionResult {
+    override fun detectCondition(conditionBitmap: Bitmap, threshold: Int): DetectionResult {
         if (isClosed) return detectionResult.copy()
 
-        detect(conditionId, threshold, detectionResult)
+        detect(conditionBitmap, threshold, detectionResult)
         return detectionResult.copy()
     }
 
-    override fun detectCondition(conditionId: Long, position: Rect, threshold: Int): DetectionResult {
+    override fun detectCondition(conditionBitmap: Bitmap, position: Rect, threshold: Int): DetectionResult {
         if (isClosed) return detectionResult.copy()
 
-        detectAt(conditionId, position.left, position.top, position.width(), position.height(), threshold, detectionResult)
+        detectAt(conditionBitmap, position.left, position.top, position.width(), position.height(), threshold, detectionResult)
         return detectionResult.copy()
     }
 
@@ -118,26 +112,18 @@ class NativeDetector : ImageDetector {
     private external fun setScreenImage(screenBitmap: Bitmap)
 
     /**
-     * Native method for preparing the detection data of a condition.
+     * Native method for detecting if the bitmap is in the whole current screen bitmap.
      *
-     * @param conditionId the unique identifier of the condition.
-     * @param conditionBitmap the bitmap of the condition.
-     */
-    private external fun nativePrepareCondition(conditionId: Long, conditionBitmap: Bitmap)
-
-    /**
-     * Native method for detecting if the prepared condition is in the whole current screen bitmap.
-     *
-     * @param conditionId the unique identifier of the condition.
+     * @param conditionBitmap the condition to detect in the screen.
      * @param threshold the allowed error threshold allowed for the condition.
      * @param result stores the results on this detection.
      */
-    private external fun detect(conditionId: Long, threshold: Int, result: DetectionResult)
+    private external fun detect(conditionBitmap: Bitmap, threshold: Int, result: DetectionResult)
 
     /**
-     * Native method for detecting if the prepared condition is at a specific position in the current screen bitmap.
+     * Native method for detecting if the bitmap is at a specific position in the current screen bitmap.
      *
-     * @param conditionId the unique identifier of the condition.
+     * @param conditionBitmap the condition to detect in the screen.
      * @param x the horizontal position of the condition.
      * @param y the vertical position of the condition.
      * @param width the width of the condition.
@@ -146,7 +132,7 @@ class NativeDetector : ImageDetector {
      * @param result stores the results on this detection.
      */
     private external fun detectAt(
-        conditionId: Long,
+        conditionBitmap: Bitmap,
         x: Int,
         y: Int,
         width: Int,

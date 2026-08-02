@@ -33,7 +33,6 @@
     <bool name="default_intent_isAdvanced">false</bool>
 
     <string name="default_toggle_event_name">Toggle event</string>
-    <string name="default_capture_name">Capture</string>
 
     <string name="default_condition_name">Condition</string>
     <integer name="default_condition_threshold">4</integer>

@@ -96,10 +96,6 @@ class ScenarioConfigViewModel(application: Application) : AndroidViewModel(appli
         }
         .filterNotNull()
 
-    /** The detection frame interval for the scenario. */
-    val detectionInterval: Flow<Int?> = configuredScenario
-        .map { it.detectionFrameInterval }
-
     /** The quality of the detection. */
     val detectionQuality: Flow<Int?> = configuredScenario
         .map { it.detectionQuality }
@@ -164,18 +160,6 @@ class ScenarioConfigViewModel(application: Application) : AndroidViewModel(appli
 
             viewModelScope.launch {
                 editionRepository.updateEditedScenario(scenario.copy(randomize = value))
-            }
-        }
-    }
-
-    /**
-     * Set the detection frame interval for the scenario.
-     * @param interval the value from the seekbar.
-     */
-    fun setDetectionInterval(interval: Int) {
-        editionRepository.editionState.getScenario()?.let { scenario ->
-            viewModelScope.launch {
-                editionRepository.updateEditedScenario(scenario.copy(detectionFrameInterval = interval))
             }
         }
     }

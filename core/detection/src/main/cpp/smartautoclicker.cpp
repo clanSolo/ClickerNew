@@ -78,29 +78,20 @@ extern "C" {
         getObject(env, self)->setScreenImage(env, screenBitmap);
     }
 
-    JNIEXPORT void JNICALL Java_com_buzbuz_smartautoclicker_core_detection_NativeDetector_nativePrepareCondition(
-            JNIEnv *env,
-            jobject self,
-            jlong conditionId,
-            jobject conditionBitmap
-    ) {
-        getObject(env, self)->prepareCondition(env, conditionId, conditionBitmap);
-    }
-
     JNIEXPORT void JNICALL Java_com_buzbuz_smartautoclicker_core_detection_NativeDetector_detect(
             JNIEnv *env,
             jobject self,
-            jlong conditionId,
+            jobject conditionBitmap,
             jint threshold,
             jobject result
     ) {
-        setDetectionResult(env, result, getObject(env, self)->detectCondition(env, conditionId, threshold));
+        setDetectionResult(env, result, getObject(env, self)->detectCondition(env, conditionBitmap, threshold));
     }
 
     JNIEXPORT void JNICALL Java_com_buzbuz_smartautoclicker_core_detection_NativeDetector_detectAt(
             JNIEnv *env,
             jobject self,
-            jlong conditionId,
+            jobject conditionBitmap,
             jint x,
             jint y,
             jint width,
@@ -108,7 +99,7 @@ extern "C" {
             jint threshold,
             jobject result
     ) {
-        setDetectionResult(env, result, getObject(env, self)->detectCondition(env, conditionId, x, y, width, height, threshold));
+        setDetectionResult(env, result, getObject(env, self)->detectCondition(env, conditionBitmap, x, y, width, height, threshold));
     }
 
     JNIEXPORT void JNICALL Java_com_buzbuz_smartautoclicker_core_detection_NativeDetector_deleteDetector(

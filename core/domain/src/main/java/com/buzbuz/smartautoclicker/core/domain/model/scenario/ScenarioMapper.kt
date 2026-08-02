@@ -27,7 +27,6 @@ internal fun Scenario.toEntity() = ScenarioEntity(
     detectionQuality = detectionQuality,
     endConditionOperator = endConditionOperator,
     randomize = randomize,
-    detectionFrameInterval = detectionFrameInterval,
 )
 
 /** @return the scenario for this entity. */
@@ -37,7 +36,6 @@ internal fun ScenarioEntity.toScenario(asDomain: Boolean = false) = Scenario(
     detectionQuality = detectionQuality,
     endConditionOperator = endConditionOperator,
     randomize = randomize,
-    detectionFrameInterval = detectionFrameInterval,
 )
 
 /** @return the scenario for this entity. */
@@ -48,5 +46,4 @@ internal fun ScenarioWithEvents.toScenario() = Scenario(
     endConditionOperator = scenario.endConditionOperator,
     randomize = scenario.randomize,
     eventCount = events.size,
-    detectionFrameInterval = scenario.detectionFrameInterval,
 )

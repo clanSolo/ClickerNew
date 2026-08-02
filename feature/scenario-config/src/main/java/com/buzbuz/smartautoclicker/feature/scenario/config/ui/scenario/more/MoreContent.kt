@@ -16,7 +16,9 @@
  */
 package com.buzbuz.smartautoclicker.feature.scenario.config.ui.scenario.more
 
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -44,6 +46,7 @@ class MoreContent(appContext: Context) : NavBarDialogContent(appContext) {
 
     override fun onCreateView(container: ViewGroup): ViewGroup {
         viewBinding = ContentMoreBinding.inflate(LayoutInflater.from(context), container, false).apply {
+            tutorialCard.setOnClickListener { onTutorialClicked() }
             debugOverlay.setOnClickListener { viewModel.toggleIsDebugViewEnabled() }
             debugReport.setOnClickListener { viewModel.toggleIsDebugReportEnabled() }
         }
@@ -64,6 +67,17 @@ class MoreContent(appContext: Context) : NavBarDialogContent(appContext) {
     override fun onDialogButtonClicked(buttonType: DialogNavigationButton) {
         if (buttonType == DialogNavigationButton.SAVE) {
             viewModel.saveConfig()
+        }
+    }
+
+    private fun onTutorialClicked() {
+        debounceUserInteraction {
+            dialogController.back()
+
+            val intent = Intent()
+                .setComponent(ComponentName(context.packageName, "com.buzbuz.smartautoclicker.feature.tutorial.ui.TutorialActivity"))
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
         }
     }
 

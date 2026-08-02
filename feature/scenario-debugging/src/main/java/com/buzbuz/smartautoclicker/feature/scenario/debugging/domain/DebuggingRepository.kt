@@ -70,15 +70,8 @@ class DebuggingRepository private constructor(context: Context) {
     val lastPositiveInfo: Flow<DebugInfo?> = debugEngine.currentInfo
         .filter { it?.isDetected ?: false }
 
-    /**
-     * Provides the listener upon scenario detection progress when a debugging feature is enabled, or null when none
-     * is, in order to avoid the overhead of the debug bookkeeping during the whole detection session.
-     *
-     * @param context the Android context.
-     * @return the debug progress listener, or null if debugging is disabled.
-     */
-    fun getDebugProgressListener(context: Context): ProgressListener? =
-        if (isDebugViewEnabled(context) || isDebugReportEnabled(context)) debugEngine else null
+    /** The listener upon scenario detection progress. Must be set at detection start in order to get debugging info. */
+    val detectionProgressListener: ProgressListener = debugEngine
 
     fun isDebugViewEnabled(context: Context): Boolean =
         sharedPreferences.getIsDebugViewEnabled(context)

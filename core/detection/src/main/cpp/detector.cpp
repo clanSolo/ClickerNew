@@ -39,9 +39,6 @@ void Detector::setScreenMetrics(JNIEnv *env, jobject screenImage, double detecti
     } else {
         scaleRatio = detectionQuality / maxImageDim;
     }
-
-    // The scale ratio has changed, the prepared conditions can no longer be used
-    preparedConditions.clear();
 }
 
 void Detector::setScreenImage(JNIEnv *env, jobject screenImage) {
@@ -56,39 +53,20 @@ void Detector::setScreenImage(JNIEnv *env, jobject screenImage) {
     resize(fullSizeGrayCurrentImage, *scaledGrayCurrentImage, Size(), scaleRatio, scaleRatio, INTER_AREA);
 }
 
-void Detector::prepareCondition(JNIEnv *env, jlong conditionId, jobject conditionImage) {
-    // Get the condition image information from the android bitmap format
-    auto fullSizeColorCondition = createColorMatFromARGB8888BitmapData(env, conditionImage);
-    if (!fullSizeColorCondition) {
-        __android_log_print(ANDROID_LOG_ERROR, "Detector",
-                            "Can't prepare condition %lld, invalid condition image", (long long) conditionId);
-        return;
-    }
-
-    // Compute once and cache all the detection data that does not change during a detection session
-    PreparedCondition preparedCondition;
-    preparedCondition.fullWidth = fullSizeColorCondition->cols;
-    preparedCondition.fullHeight = fullSizeColorCondition->rows;
-    preparedCondition.colorMean = cv::mean(*fullSizeColorCondition);
-    preparedCondition.scaledGrayCondition = *scaleAndChangeToGray(*fullSizeColorCondition);
-
-    preparedConditions[conditionId] = std::move(preparedCondition);
-}
-
-DetectionResult Detector::detectCondition(JNIEnv *env, jlong conditionId, int threshold) {
+DetectionResult Detector::detectCondition(JNIEnv *env, jobject conditionImage, int threshold) {
     return detectCondition(
         env,
-        conditionId,
+        conditionImage,
         cv::Rect(0, 0, fullSizeColorCurrentImage->cols, fullSizeColorCurrentImage->rows),
         threshold
     );
 }
 
-DetectionResult Detector::detectCondition(JNIEnv *env, jlong conditionId, int x, int y, int width, int height, int threshold) {
-    return detectCondition(env, conditionId, cv::Rect(x, y, width, height), threshold);
+DetectionResult Detector::detectCondition(JNIEnv *env, jobject conditionImage, int x, int y, int width, int height, int threshold) {
+    return detectCondition(env, conditionImage, cv::Rect(x, y, width, height), threshold);
 }
 
-DetectionResult Detector::detectCondition(JNIEnv *env, jlong conditionId, cv::Rect fullSizeDetectionRoi, int threshold) {
+DetectionResult Detector::detectCondition(JNIEnv *env, jobject conditionImage, cv::Rect fullSizeDetectionRoi, int threshold) {
     // Reset the results cache
     detectionResult.reset();
 
@@ -100,15 +78,6 @@ DetectionResult Detector::detectCondition(JNIEnv *env, jlong conditionId, cv::Re
         env->ThrowNew(je, "Can't detect condition, scaledGrayCurrentImage is empty !");
         return detectionResult;
     }
-
-    // Get the prepared detection data for the condition
-    auto preparedConditionIt = preparedConditions.find(conditionId);
-    if (preparedConditionIt == preparedConditions.end()) {
-        __android_log_print(ANDROID_LOG_ERROR, "Detector",
-                            "Condition %lld is not prepared !", (long long) conditionId);
-        return detectionResult;
-    }
-    auto& preparedCondition = preparedConditionIt->second;
 
     // Get and check the detection area in normal and scaled size
     if (isRoiOutOfBounds(fullSizeDetectionRoi, *fullSizeColorCurrentImage)) {
@@ -130,16 +99,12 @@ DetectionResult Detector::detectCondition(JNIEnv *env, jlong conditionId, cv::Re
     // Crop the scaled gray current image to only get the detection area
     auto croppedGrayCurrentImage = Mat(*scaledGrayCurrentImage, scaledDetectionRoi);
 
-    // Invalid detection, the condition can't fit in the detection area
-    if (croppedGrayCurrentImage.rows < preparedCondition.scaledGrayCondition.rows ||
-        croppedGrayCurrentImage.cols < preparedCondition.scaledGrayCondition.cols) {
-        __android_log_print(ANDROID_LOG_ERROR, "Detector",
-                            "Invalid detection area, condition %lld can't fit in it", (long long) conditionId);
-        return detectionResult;
-    }
+    // Get the condition image information from the android bitmap format.
+    auto fullSizeColorCondition = createColorMatFromARGB8888BitmapData(env, conditionImage);
+    auto scaledGrayCondition = scaleAndChangeToGray(*fullSizeColorCondition);
 
-    // Compute the matching results in the scratch buffer of the condition, avoiding an allocation per detection
-    matchTemplate(croppedGrayCurrentImage, preparedCondition.scaledGrayCondition, preparedCondition.matchingResults);
+    // Get the matching results
+    auto matchingResults = matchTemplate(croppedGrayCurrentImage, *scaledGrayCondition);
 
     // Until a condition is detected or none fits
     cv::Rect scaledMatchingRoi;
@@ -147,27 +112,27 @@ DetectionResult Detector::detectCondition(JNIEnv *env, jlong conditionId, cv::Re
     detectionResult.isDetected = false;
     while (!detectionResult.isDetected) {
         // Find the max value and its position in the result
-        locateMinMax(preparedCondition.matchingResults, detectionResult);
+        locateMinMax(*matchingResults, detectionResult);
         // If the maximum for the whole picture is below the threshold, we will never find.
         if (!isValidMatching(detectionResult, threshold)) break;
 
         // Calculate the ROI based on the maximum location
-        scaledMatchingRoi = getDetectionResultScaledCroppedRoi(preparedCondition.scaledGrayCondition.cols, preparedCondition.scaledGrayCondition.rows);
-        fullSizeMatchingRoi = getDetectionResultFullSizeRoi(fullSizeDetectionRoi, preparedCondition.fullWidth, preparedCondition.fullHeight);
+        scaledMatchingRoi = getDetectionResultScaledCroppedRoi(scaledGrayCondition->cols, scaledGrayCondition->rows);
+        fullSizeMatchingRoi = getDetectionResultFullSizeRoi(fullSizeDetectionRoi, fullSizeColorCondition->cols, fullSizeColorCondition->rows);
         if (isRoiOutOfBounds(scaledMatchingRoi, *scaledGrayCurrentImage) || isRoiOutOfBounds(fullSizeMatchingRoi, *fullSizeColorCurrentImage)) {
             // Roi is out of bounds, invalid match
-            markRoiAsInvalidInResults(preparedCondition.matchingResults,scaledMatchingRoi);
+            markRoiAsInvalidInResults(*matchingResults,scaledMatchingRoi);
             continue;
         }
 
         // Check if the colors are matching in the candidate area.
         auto fullSizeColorCroppedCurrentImage = Mat(*fullSizeColorCurrentImage, fullSizeMatchingRoi);
-        double colorDiff = getColorDiff(fullSizeColorCroppedCurrentImage, preparedCondition.colorMean);
+        double colorDiff = getColorDiff(fullSizeColorCroppedCurrentImage, *fullSizeColorCondition);
         if (colorDiff < threshold) {
             detectionResult.isDetected = true;
         } else {
             // Colors are invalid, modify the matching result to indicate that.
-            markRoiAsInvalidInResults(preparedCondition.matchingResults,scaledMatchingRoi);
+            markRoiAsInvalidInResults(*matchingResults,scaledMatchingRoi);
         }
     }
 
@@ -197,18 +162,14 @@ std::unique_ptr<Mat> Detector::scaleAndChangeToGray(const cv::Mat& fullSizeColor
     return std::make_unique<cv::Mat>(scaledGrayCondition);
 }
 
-void Detector::matchTemplate(const Mat& image, const Mat& condition, Mat& results) {
-    // Reuse the scratch buffer between detections, only reallocate it if the dimensions have changed
-    int resultsRows = image.rows - condition.rows + 1;
-    int resultsCols = image.cols - condition.cols + 1;
-    if (results.rows != resultsRows || results.cols != resultsCols || results.type() != CV_32F) {
-        results.create(resultsRows, resultsCols, CV_32F);
-    }
+std::unique_ptr<Mat> Detector::matchTemplate(const Mat& image, const Mat& condition) {
+    cv::Mat resultMat(image.rows - condition.rows + 1, image.cols - condition.cols + 1, CV_32F);
+    cv::matchTemplate(image, condition, resultMat, cv::TM_CCOEFF_NORMED);
 
-    cv::matchTemplate(image, condition, results, cv::TM_CCOEFF_NORMED);
+    return std::make_unique<cv::Mat>(resultMat);
 }
 
-void Detector::locateMinMax(const cv::Mat& matchingResult, DetectionResult& results) {
+void Detector::locateMinMax(const Mat& matchingResult, DetectionResult& results) {
     minMaxLoc(matchingResult, &results.minVal, &results.maxVal, &results.minLoc, &results.maxLoc, Mat());
 }
 
@@ -216,12 +177,13 @@ bool Detector::isValidMatching(const DetectionResult& results, const int thresho
     return results.maxVal > ((double) (100 - threshold) / 100);
 }
 
-double Detector::getColorDiff(const cv::Mat& image, const cv::Scalar& conditionColorMean) {
-    auto imageColorMean = mean(image);
+double Detector::getColorDiff(const cv::Mat& image, const cv::Mat& condition) {
+    auto imageColorMeans = mean(image);
+    auto conditionColorMeans = mean(condition);
 
     double diff = 0;
     for (int i = 0; i < 3; i++) {
-        diff += abs(imageColorMean.val[i] - conditionColorMean.val[i]);
+        diff += abs(imageColorMeans.val[i] - conditionColorMeans.val[i]);
     }
     return (diff * 100) / (255 * 3);
 }

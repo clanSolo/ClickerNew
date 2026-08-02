@@ -46,7 +46,6 @@ fun Action.getIconRes() : Int =
         is Action.Pause -> R.drawable.ic_wait_aligned
         is Action.Intent -> R.drawable.ic_intent
         is Action.ToggleEvent -> R.drawable.ic_toggle_event
-        is Action.Capture -> R.drawable.ic_capture
         else -> throw IllegalArgumentException("Not yet supported")
 
     }

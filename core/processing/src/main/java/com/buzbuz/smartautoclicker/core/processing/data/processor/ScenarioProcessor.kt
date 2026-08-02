@@ -51,8 +51,6 @@ import kotlinx.coroutines.yield
  * @param endConditions the list of end conditions for the current scenario.
  * @param onStopRequested called when a end condition of the scenario have been reached or all events are disabled.
  * @param progressListener the object to notify for detection progress. Can be null if not required.
- * @param screenCaptureExecutor called with the current screen frame when a capture action is executed. Can be null if
- * no captured actions are present in the events.
  */
 internal class ScenarioProcessor(
     private val imageDetector: ImageDetector,
@@ -65,20 +63,16 @@ internal class ScenarioProcessor(
     endConditions: List<EndCondition>,
     private val onStopRequested: () -> Unit,
     private val progressListener: ProgressListener? = null,
-    screenCaptureExecutor: ((Bitmap) -> Unit)? = null,
 ) {
 
     /** Handle the processing state of the scenario. */
     private val scenarioState = ScenarioState(events)
     /** Execute the detected event actions. */
-    private val actionExecutor = ActionExecutor(androidExecutor, scenarioState, randomize, screenCaptureExecutor)
+    private val actionExecutor = ActionExecutor(androidExecutor, scenarioState, randomize)
     /** Verifies the end conditions of a scenario. */
     private val endConditionVerifier = EndConditionVerifier(endConditions, endConditionOperator, onStopRequested)
     /** Keep track of the detection results during the processing. */
     private val processingResults = ProcessingResults(events)
-
-    /** The identifiers of the conditions already prepared for the detection in the [imageDetector]. */
-    private val preparedConditionIds = mutableSetOf<Long>()
 
     /** Tells if the screen metrics have been invalidated and should be updated. */
     private var invalidateScreenMetrics = true
@@ -124,7 +118,7 @@ internal class ScenarioProcessor(
             // If conditions are fulfilled, execute this event's actions !
             if (conditionAreFulfilled) {
                 event.actions.let { actions ->
-                    actionExecutor.executeActions(event, actions, processingResults, screenFrame)
+                    actionExecutor.executeActions(event, actions, processingResults)
                 }
 
                 // Check if an event has reached its max execution count.
@@ -148,8 +142,6 @@ internal class ScenarioProcessor(
     private fun initScreenFrame(screenFrame: Bitmap) {
         if (invalidateScreenMetrics) {
             imageDetector.setScreenMetrics(screenFrame, detectionQuality.toDouble())
-            // The prepared conditions are invalidated by the new screen metrics, they will be prepared again lazily
-            preparedConditionIds.clear()
             invalidateScreenMetrics = false
         }
 
@@ -198,49 +190,37 @@ internal class ScenarioProcessor(
     /**
      * Check if the provided condition is fulfilled.
      *
-     * Check if the condition match the content of the condition area on the currently processed [Image]. The detection
-     * of each condition is prepared once per session, as the condition bitmaps are immutable while detecting. This
-     * avoids processing them again for every image.
+     * Check if the condition bitmap match the content of the condition area on the currently processed [Image].
      *
      * @param condition the event condition to be verified.
      *
      * @return the result of the detection, or null of the detection is not possible.
      */
     private suspend fun checkCondition(condition: Condition) : DetectionResult? {
-        val conditionId = condition.id.databaseId
-
-        if (preparedConditionIds.add(conditionId)) {
-            // First check of this condition during this session, prepare its detection data into the image detector
-            val conditionBitmap = condition.path?.let { path ->
-                bitmapSupplier(path, condition.area.width(), condition.area.height())
+        condition.path?.let { path ->
+            bitmapSupplier(path, condition.area.width(), condition.area.height())?.let { conditionBitmap ->
+                return detect(condition, conditionBitmap)
             }
-            if (conditionBitmap == null) {
-                Log.w(TAG, "Bitmap for condition with path ${condition.path} not found.")
-                preparedConditionIds.remove(conditionId)
-                return null
-            }
-
-            imageDetector.prepareCondition(conditionId, conditionBitmap)
         }
 
-        return detect(condition, conditionId)
+        Log.w(TAG, "Bitmap for condition with path ${condition.path} not found.")
+        return null
     }
 
     /**
      * Detect the condition on the screen.
-     * Its detection data must have been prepared first with [ImageDetector.prepareCondition].
      *
      * @param condition the condition to be detected.
-     * @param conditionId the unique identifier of the condition.
+     * @param conditionBitmap the bitmap representing the condition.
      *
      * @return the result of the detection.
      */
-    private fun detect(condition: Condition, conditionId: Long): DetectionResult =
+    private fun detect(condition: Condition, conditionBitmap: Bitmap): DetectionResult =
          when (condition.detectionType) {
-             EXACT -> imageDetector.detectCondition(conditionId, condition.area, condition.threshold)
-             WHOLE_SCREEN -> imageDetector.detectCondition(conditionId, condition.threshold)
+             EXACT -> imageDetector.detectCondition(conditionBitmap, condition.area, condition.threshold)
+             WHOLE_SCREEN -> imageDetector.detectCondition(conditionBitmap, condition.threshold)
              IN_AREA -> condition.detectionArea?.let { area ->
-                 imageDetector.detectCondition(conditionId, area, condition.threshold)
+                 imageDetector.detectCondition(conditionBitmap, area, condition.threshold)
              } ?: throw IllegalArgumentException("Invalid IN_AREA condition, no area defined")
              else -> throw IllegalArgumentException("Unexpected detection type")
          }

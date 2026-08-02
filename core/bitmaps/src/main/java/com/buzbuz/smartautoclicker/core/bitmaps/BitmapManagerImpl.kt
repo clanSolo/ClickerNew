@@ -26,40 +26,21 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.io.IOException
 import java.nio.ByteBuffer
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /**
  * Manages the bitmaps for the event conditions.
  * Handle the save/load into the persistent memory, as well as the cache loading them in ram.
  *
  * @param appDataDir the directory where all bitmaps will be saved/loaded.
- * @param screenCaptureDir the directory where the screen captures will be saved. Can be null if the external storage
- *                         is unavailable, in that case screen captures can't be saved.
  */
-internal class BitmapManagerImpl(
-    private val appDataDir: File,
-    private val screenCaptureDir: File? = null,
-) : BitmapManager {
+internal class BitmapManagerImpl(private val appDataDir: File) : BitmapManager {
 
     companion object {
         /** Tag for logs */
         private const val TAG = "BitmapManager"
         /** The ratio of the total application size for the size of the bitmap cache in the memory. */
         private const val CACHE_SIZE_RATIO = 0.5
-        /** The prefix of the screen capture file names. */
-        private const val SCREEN_CAPTURE_FILE_PREFIX = "captura_"
-        /** The extension of the screen capture files. */
-        private const val SCREEN_CAPTURE_FILE_EXTENSION = ".png"
-        /** The maximum number of screen captures kept in the capture directory. The oldest ones are deleted. */
-        private const val SCREEN_CAPTURE_MAX_COUNT = 100
-        /** The quality used for the PNG compression of the screen captures. */
-        private const val SCREEN_CAPTURE_PNG_QUALITY = 100
-        /** The format of the date in the screen capture file names. */
-        private val SCREEN_CAPTURE_DATE_FORMAT = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US)
     }
 
     /** Cache for the bitmaps loaded in memory. */
@@ -92,60 +73,6 @@ internal class BitmapManagerImpl(
         memoryCache.put(path, bitmap)
 
         return path
-    }
-
-    override suspend fun saveScreenCapture(bitmap: Bitmap) : String? {
-        val captureDir = screenCaptureDir
-        if (captureDir == null) {
-            Log.e(TAG, "Invalid screen capture directory, capture can't be saved.")
-            return null
-        }
-
-        if (!captureDir.exists() && !captureDir.mkdirs()) {
-            Log.e(TAG, "Can't create screen capture directory ${captureDir.absolutePath}")
-            return null
-        }
-
-        val captureFile = File(
-            captureDir,
-            "$SCREEN_CAPTURE_FILE_PREFIX${SCREEN_CAPTURE_DATE_FORMAT.format(Date())}$SCREEN_CAPTURE_FILE_EXTENSION"
-        )
-        Log.d(TAG, "Saving screen capture ${captureFile.name}")
-
-        return try {
-            withContext(Dispatchers.IO) {
-                FileOutputStream(captureFile).use { stream ->
-                    bitmap.compress(Bitmap.CompressFormat.PNG, SCREEN_CAPTURE_PNG_QUALITY, stream)
-                }
-                deleteOldestScreenCaptures(captureDir)
-            }
-            captureFile.absolutePath
-        } catch (ioEx: IOException) {
-            Log.e(TAG, "Unable to save screen capture ${captureFile.absolutePath}", ioEx)
-            null
-        }
-    }
-
-    /**
-     * Delete the oldest screen captures if they exceed [SCREEN_CAPTURE_MAX_COUNT], in order to keep the storage
-     * usage of the captures bounded. The capture file names start with their timestamp, so ordering them by name
-     * also orders them chronologically.
-     *
-     * @param captureDir the directory containing the screen captures.
-     */
-    private fun deleteOldestScreenCaptures(captureDir: File) {
-        val captures = captureDir.listFiles { file ->
-            file.isFile && file.name.startsWith(SCREEN_CAPTURE_FILE_PREFIX) &&
-                    file.name.endsWith(SCREEN_CAPTURE_FILE_EXTENSION)
-        }?.sortedBy { it.name } ?: return
-
-        val obsoleteCaptureCount = captures.size - SCREEN_CAPTURE_MAX_COUNT
-        if (obsoleteCaptureCount <= 0) return
-
-        Log.d(TAG, "Deleting $obsoleteCaptureCount old screen captures")
-        for (index in 0 until obsoleteCaptureCount) {
-            captures[index].delete()
-        }
     }
 
     override suspend fun loadBitmap(path: String, width: Int, height: Int) : Bitmap? {

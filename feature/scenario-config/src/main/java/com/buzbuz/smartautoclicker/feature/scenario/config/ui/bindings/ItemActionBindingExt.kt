@@ -71,7 +71,6 @@ fun Action.toActionDetails(context: Context, inError: Boolean = !isComplete()): 
     is Action.Pause -> this.toPauseDetails(context, inError)
     is Action.Intent -> this.toIntentDetails(context, inError)
     is Action.ToggleEvent -> this.toToggleEventDetails(context, inError)
-    is Action.Capture -> this.toCaptureDetails(context, inError)
     else -> throw IllegalArgumentException("Not yet supported")
 }
 
@@ -142,18 +141,6 @@ private fun Action.ToggleEvent.toToggleEventDetails(context: Context, inError: B
         details = when {
             inError -> context.getString(R.string.item_error_action_invalid_toggle_event_target)
             else -> formatToggleEventState(this, context)
-        },
-        action = this,
-        haveError = inError,
-    )
-
-private fun Action.Capture.toCaptureDetails(context: Context, inError: Boolean): ActionDetails =
-    ActionDetails(
-        icon = R.drawable.ic_capture,
-        name = name!!,
-        details = when {
-            inError -> context.getString(R.string.item_error_action_invalid_generic)
-            else -> context.getString(R.string.item_desc_capture_details)
         },
         action = this,
         haveError = inError,

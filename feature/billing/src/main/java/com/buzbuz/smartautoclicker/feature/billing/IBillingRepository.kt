@@ -60,11 +60,11 @@ interface IBillingRepository {
      */
     val canPurchaseProMode: Flow<Boolean>
 
-    /** @return the name of the pro mode. */
+    /** @return the PlayStore name of the pro mode. */
     val proModeTitle: Flow<String>
-    /** @return the price of the pro mode. */
+    /** @return the PlayStore price of the pro mode. */
     val proModePrice: Flow<String>
-    /** @return the description of the pro mode. */
+    /** @return the PlayStore description of the pro mode. */
     val proModeDescription: Flow<String>
 
     /**

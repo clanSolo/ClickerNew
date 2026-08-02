@@ -22,6 +22,17 @@ android {
         }
     }
 
+    // Specifies one flavor dimension.
+    flavorDimensions += "version"
+    productFlavors {
+        create("fDroid") {
+            dimension = "version"
+        }
+        create("playStore") {
+            dimension = "version"
+        }
+    }
+
     buildFeatures {
         viewBinding true
     }
@@ -52,5 +63,6 @@ dependencies {
     implementation project(path: ':feature:billing')
     implementation project(path: ':feature:scenario-debugging')
     implementation project(path: ':feature:scenario-config')
+    implementation project(path: ':feature:tutorial')
 
 }

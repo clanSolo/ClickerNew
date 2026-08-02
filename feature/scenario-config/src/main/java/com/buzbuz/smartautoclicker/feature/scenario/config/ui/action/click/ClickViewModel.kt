@@ -66,7 +66,7 @@ class ClickViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = Repository.getRepository(application)
     /** Repository providing access to the edited items. */
     private val editionRepository = EditionRepository.getInstance(application)
-    /** Monitors views. */
+    /** Monitors views for the tutorial. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
     /** Event configuration shared preferences. */
     private val sharedPreferences: SharedPreferences = application.getEventConfigPreferences()
