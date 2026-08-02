@@ -1,5 +1,5 @@
 name: Build release APK
-# Build the Smart AutoClicker release APK.
+# Build the Smart AutoClicker release APK (signed) and a debug APK.
 # Trigger: manual (Actions > Build release APK > Run workflow) or on push.
 on:
   workflow_dispatch:
@@ -27,8 +27,29 @@ jobs:
           echo "ANDROID_NDK=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV
+      # Recreate the release keystore from the RELEASE_KEYSTORE_BASE64 secret.
+      # If the secret is not set, the release APK will be built unsigned.
+      - name: Restore release keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > smartautoclicker/smartautoclicker.jks
+            echo "Release keystore restored: signing enabled"
+          else
+            echo "No RELEASE_KEYSTORE_BASE64 secret found: building unsigned"
+          fi
       - name: Build release APK
-        run: ./gradlew assembleRelease
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          ./gradlew \
+            -PsigningStorePassword="$SIGNING_STORE_PASSWORD" \
+            -PsigningKeyAlias="$SIGNING_KEY_ALIAS" \
+            -PsigningKeyPassword="$SIGNING_KEY_PASSWORD" \
+            assembleRelease
       # Debug APK: signed with the debug key, directly installable on a device.
       - name: Build debug APK
         run: ./gradlew assembleDebug
