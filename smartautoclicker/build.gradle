@@ -27,6 +27,15 @@ if (signingPropertiesFile.exists()) {
     signingProperties.load(new FileInputStream(signingPropertiesFile))
 }
 
+// The release signing requires both the keystore file and the signing properties, provided either by the
+// signing.properties file or by the gradle -P command line properties. If any of them is unavailable, the
+// release build is left unsigned instead of failing the whole project configuration.
+def hasSigningProperties = signingPropertiesFile.exists() ||
+        (rootProject.hasProperty('signingStorePassword') &&
+         rootProject.hasProperty('signingKeyAlias') &&
+         rootProject.hasProperty('signingKeyPassword'))
+def canSignRelease = signingStoreFile.exists() && hasSigningProperties
+
 android {
     namespace 'com.buzbuz.smartautoclicker'
     compileSdk rootProject.ext.compileSdkVersion
@@ -52,7 +61,7 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    if (signingStoreFile.exists()) {
+    if (canSignRelease) {
         signingConfigs {
             release {
                 storeFile signingStoreFile
@@ -65,7 +74,7 @@ android {
 
     buildTypes {
         release {
-            if (signingStoreFile.exists()) {
+            if (canSignRelease) {
                 signingConfig signingConfigs.release
             }
             minifyEnabled true
