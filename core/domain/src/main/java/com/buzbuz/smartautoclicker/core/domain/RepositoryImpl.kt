@@ -16,11 +16,9 @@
  */
 package com.buzbuz.smartautoclicker.core.domain
 
-import android.util.Log
 
 import com.buzbuz.smartautoclicker.core.bitmaps.BitmapManager
 import com.buzbuz.smartautoclicker.core.database.ClickDatabase
-import com.buzbuz.smartautoclicker.core.database.TutorialDatabase
 import com.buzbuz.smartautoclicker.core.database.entity.CompleteScenario
 import com.buzbuz.smartautoclicker.core.domain.data.ScenarioDataSource
 import com.buzbuz.smartautoclicker.core.domain.model.action.Action
@@ -50,7 +48,6 @@ import kotlinx.coroutines.flow.mapNotNull
  */
 internal class RepositoryImpl internal constructor(
     private val database: ClickDatabase,
-    private val tutorialDatabase: TutorialDatabase,
     private val bitmapManager: BitmapManager,
 ): Repository {
 
@@ -104,20 +101,4 @@ internal class RepositoryImpl internal constructor(
     override fun cleanCache(): Unit =
         bitmapManager.releaseCache()
 
-    override fun startTutorialMode() {
-        Log.d(TAG, "Start tutorial mode, use tutorial database")
-        dataSource.currentDatabase.value = tutorialDatabase
-    }
-
-    override fun stopTutorialMode() {
-        Log.d(TAG, "Stop tutorial mode, use regular database")
-        dataSource.currentDatabase.value = database
-    }
-
-    override fun isTutorialModeEnabled(): Boolean =
-        dataSource.currentDatabase.value == tutorialDatabase
-
 }
-
-/** Tag for logs. */
-private const val TAG = "RepositoryImpl"

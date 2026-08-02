@@ -37,7 +37,7 @@ class EventDialogViewModel(application: Application) : AndroidViewModel(applicat
 
     /** Repository containing the user editions. */
     private val editionRepository = EditionRepository.getInstance(application)
-    /** Monitors views for the tutorial. */
+    /** Monitors views. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
     /**

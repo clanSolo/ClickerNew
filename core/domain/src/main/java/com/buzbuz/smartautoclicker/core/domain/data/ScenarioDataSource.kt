@@ -21,7 +21,6 @@ import androidx.room.withTransaction
 
 import com.buzbuz.smartautoclicker.core.bitmaps.BitmapManager
 import com.buzbuz.smartautoclicker.core.bitmaps.CONDITION_FILE_PREFIX
-import com.buzbuz.smartautoclicker.core.bitmaps.TUTORIAL_CONDITION_FILE_PREFIX
 import com.buzbuz.smartautoclicker.core.database.ClickDatabase
 import com.buzbuz.smartautoclicker.core.database.ScenarioDatabase
 import com.buzbuz.smartautoclicker.core.database.dao.ActionDao
@@ -398,15 +397,11 @@ internal class ScenarioDataSource(
 
     private suspend fun saveBitmapIfNeeded(condition: Condition): String =
         if (condition.path.isNullOrEmpty()) {
-            condition.bitmap?.let { bitmapManager.saveBitmap(it, getBitmapFilePrefix()) }
+            condition.bitmap?.let { bitmapManager.saveBitmap(it, CONDITION_FILE_PREFIX) }
                 ?: throw IllegalArgumentException("Can't insert condition, bitmap and path are both null.")
         } else {
             condition.path
         }
-
-    private fun getBitmapFilePrefix(): String =
-        if (currentDatabase.value is ClickDatabase) CONDITION_FILE_PREFIX
-        else TUTORIAL_CONDITION_FILE_PREFIX
 }
 
 /** Tag for logs. */

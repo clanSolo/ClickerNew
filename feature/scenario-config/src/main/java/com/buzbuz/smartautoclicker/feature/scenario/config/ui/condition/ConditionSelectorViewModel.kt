@@ -36,7 +36,7 @@ class ConditionSelectorViewModel(application: Application) : AndroidViewModel(ap
 
     /** Provides screen images. */
     private val displayRecorder: DisplayRecorder = DisplayRecorder.getInstance()
-    /** Monitors views for the tutorial. */
+    /** Monitors views. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
     fun takeScreenshot(area: Rect, resultCallback: (Bitmap) -> Unit) {

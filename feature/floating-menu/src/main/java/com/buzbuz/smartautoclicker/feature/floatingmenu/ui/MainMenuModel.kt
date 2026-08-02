@@ -34,7 +34,6 @@ import com.buzbuz.smartautoclicker.feature.scenario.debugging.domain.DebuggingRe
 import com.buzbuz.smartautoclicker.core.ui.monitoring.MonitoredViewsManager
 import com.buzbuz.smartautoclicker.core.ui.monitoring.ViewPositioningType
 import com.buzbuz.smartautoclicker.core.ui.monitoring.MonitoredViewType
-import com.buzbuz.smartautoclicker.feature.tutorial.domain.TutorialRepository
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -50,7 +49,7 @@ import kotlin.time.Duration.Companion.minutes
  */
 class MainMenuModel(application: Application) : AndroidViewModel(application) {
 
-    /** Monitors views for the tutorial. */
+    /** Monitors views. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
     /** The repository for the scenarios. */
@@ -64,8 +63,6 @@ class MainMenuModel(application: Application) : AndroidViewModel(application) {
     private val billingRepository: BillingRepository = IBillingRepository.getRepository(application.applicationContext)
     /** The repository for the scenario debugging info. */
     private val debugRepository: DebuggingRepository = DebuggingRepository.getDebuggingRepository(application)
-    /** The repository for the tutorials data. */
-    private val tutorialRepository: TutorialRepository = TutorialRepository.getTutorialRepository(application)
 
     /** Tells if the pro mode is purchased. */
     private val isProModePurchased: StateFlow<Boolean> = billingRepository.isProModePurchased
@@ -176,12 +173,6 @@ class MainMenuModel(application: Application) : AndroidViewModel(application) {
             detach(MonitoredViewType.FLOATING_MENU_BUTTON_CONFIG)
         }
     }
-
-    fun shouldShowFirstTimeTutorialDialog(): Boolean =
-        !tutorialRepository.isTutorialFirstTimePopupShown()
-
-    fun onFirstTimeTutorialDialogShown(): Unit =
-        tutorialRepository.setIsTutorialFirstTimePopupShown()
 
     override fun onCleared() {
         super.onCleared()
