@@ -139,6 +139,8 @@
       -->
     <string name="section_title_condition_detection_details">检测细节</string>
     <string name="section_title_condition_threshold">容差</string>
+    <string name="section_title_detection_interval">检测间隔</string>
+    <string name="message_detection_interval_description">在两次检测之间忽略 N 帧。0 处理所有帧</string>
     <string name="section_title_detection_quality_title">检测质量</string>
     <string name="section_title_end_condition">终止条件</string>
     <string name="section_title_intent_extras_value">参数值</string>

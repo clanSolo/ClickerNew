@@ -37,6 +37,8 @@ import kotlinx.serialization.Serializable
  *                             value of [com.buzbuz.smartautoclicker.domain.ConditionOperator].
  * @param randomize if true, the action values such as timers, positions will be shifted by a small random value in
  *                  order to avoid behaving like a bot.
+ * @param detectionFrameInterval the number of frames to ignore between two detections, in order to reduce the
+ *                               processing load. 0 means all frames are processed (default behaviour).
  */
 @Entity(tableName = "scenario_table")
 @Serializable
@@ -46,6 +48,7 @@ data class ScenarioEntity(
     @ColumnInfo(name = "detection_quality") val detectionQuality: Int,
     @ColumnInfo(name = "end_condition_operator") val endConditionOperator: Int,
     @ColumnInfo(name = "randomize", defaultValue="0") val randomize: Boolean = false,
+    @ColumnInfo(name = "detection_frame_interval", defaultValue="0") val detectionFrameInterval: Int = 0,
 )
 
 /**

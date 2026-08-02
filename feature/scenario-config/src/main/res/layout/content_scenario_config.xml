@@ -40,7 +40,80 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/scenario_action_randomization"/>
+            app:layout_constraintBottom_toTopOf="@id/detection_interval_card"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/detection_interval_card"
+            style="@style/AppTheme.Widget.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/margin_vertical_small"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/scenario_name_field"
+            app:layout_constraintBottom_toTopOf="@id/scenario_action_randomization">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="@dimen/margin_horizontal_default"
+                android:layout_marginVertical="@dimen/margin_vertical_large">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/detection_interval_title"
+                    style="@style/AppTheme.TextAppearance.CardTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:text="@string/section_title_detection_interval" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/text_detection_interval_value"
+                    style="@style/AppTheme.TextAppearance.Body"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/margin_horizontal_small"
+                    android:layout_marginEnd="@dimen/margin_horizontal_small"
+                    android:layout_marginTop="@dimen/margin_vertical_small"
+                    android:gravity="center"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/detection_interval_title"
+                    app:layout_constraintBottom_toTopOf="@id/seekbar_detection_interval"
+                    tools:text="0"/>
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/seekbar_detection_interval"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/item_height"
+                    android:layout_marginStart="@dimen/margin_horizontal_small"
+                    android:layout_marginEnd="@dimen/margin_horizontal_small"
+                    android:valueFrom="0"
+                    android:valueTo="10"
+                    android:stepSize="1"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/text_detection_interval_value"
+                    app:layout_constraintBottom_toTopOf="@id/text_detection_interval_description"
+                    app:labelBehavior="gone"/>
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/text_detection_interval_description"
+                    style="@style/AppTheme.TextAppearance.EmptyTextSecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/seekbar_detection_interval"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    android:text="@string/message_detection_interval_description" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </com.google.android.material.card.MaterialCardView>
 
         <include layout="@layout/include_input_field_dropdown"
             android:id="@+id/scenario_action_randomization"
@@ -49,7 +122,7 @@
             android:layout_marginBottom="@dimen/margin_vertical_large"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/scenario_name_field"
+            app:layout_constraintTop_toBottomOf="@id/detection_interval_card"
             app:layout_constraintBottom_toTopOf="@id/detection_quality_card"/>
 
         <com.google.android.material.card.MaterialCardView

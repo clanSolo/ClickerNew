@@ -97,6 +97,10 @@ class ScenarioConfigViewModel(application: Application) : AndroidViewModel(appli
         .filterNotNull()
 
     /** The quality of the detection. */
+    /** The detection frame interval for the scenario. */
+    val detectionInterval: Flow<Int?> = configuredScenario
+        .map { it.detectionFrameInterval }
+
     val detectionQuality: Flow<Int?> = configuredScenario
         .map { it.detectionQuality }
 
@@ -186,6 +190,18 @@ class ScenarioConfigViewModel(application: Application) : AndroidViewModel(appli
                         detectionQuality = min(scenario.detectionQuality + 1, DETECTION_QUALITY_MAX.toInt())
                     )
                 )
+            }
+        }
+    }
+
+    /**
+     * Set the detection frame interval for the scenario.
+     * @param interval the number of frames ignored between two detections, from the slider.
+     */
+    fun setDetectionInterval(interval: Int) {
+        editionRepository.editionState.getScenario()?.let { scenario ->
+            viewModelScope.launch {
+                editionRepository.updateEditedScenario(scenario.copy(detectionFrameInterval = interval))
             }
         }
     }

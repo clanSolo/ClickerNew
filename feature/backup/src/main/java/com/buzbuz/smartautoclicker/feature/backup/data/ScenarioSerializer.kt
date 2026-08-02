@@ -141,6 +141,7 @@ internal class ScenarioSerializer {
                 ?.coerceIn(OPERATOR_LOWER_BOUND, OPERATOR_UPPER_BOUND)
                 ?: OPERATOR_DEFAULT_VALUE,
             randomize = getBoolean("randomize") ?: false,
+            detectionFrameInterval = getInt("detectionFrameInterval")?.coerceAtLeast(0) ?: 0,
         )
     }
 

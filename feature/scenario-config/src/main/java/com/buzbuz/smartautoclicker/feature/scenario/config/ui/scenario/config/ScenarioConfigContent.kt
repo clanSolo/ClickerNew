@@ -78,6 +78,10 @@ class ScenarioConfigContent(appContext: Context) : NavBarDialogContent(appContex
                 if (fromUser) viewModel.setDetectionQuality(value.roundToInt())
             }
 
+            seekbarDetectionInterval.addOnChangeListener { _, value, fromUser ->
+                if (fromUser) viewModel.setDetectionInterval(value.roundToInt())
+            }
+
             endConditionsOperatorField.setItems(
                 items = viewModel.endConditionOperatorsItems,
                 onItemSelected = viewModel::setConditionOperator,
@@ -115,6 +119,7 @@ class ScenarioConfigContent(appContext: Context) : NavBarDialogContent(appContex
                 launch { viewModel.randomizationDropdownState.collect(::updateRandomizationDropdown) }
                 launch { viewModel.randomization.collect(::updateRandomization) }
                 launch { viewModel.isProModePurchased.collect(::updateProModeFeaturesUi) }
+                launch { viewModel.detectionInterval.collect(::updateDetectionInterval) }
                 launch { viewModel.detectionQuality.collect(::updateQuality) }
                 launch { viewModel.endConditionOperator.collect(::updateEndConditionOperator) }
                 launch { viewModel.endConditions.collect(::updateEndConditions) }
@@ -147,6 +152,17 @@ class ScenarioConfigContent(appContext: Context) : NavBarDialogContent(appContex
 
     private fun updateRandomization(randomizationItem: DropdownItem) {
         viewBinding.scenarioActionRandomization.setSelectedItem(randomizationItem)
+    }
+
+    private fun updateDetectionInterval(interval: Int?) {
+        if (interval == null) return
+
+        viewBinding.apply {
+            textDetectionIntervalValue.text = interval.toString()
+            if (seekbarDetectionInterval.value != interval.toFloat()) {
+                seekbarDetectionInterval.value = interval.toFloat()
+            }
+        }
     }
 
     private fun updateProModeFeaturesUi(isEnabled: Boolean) {

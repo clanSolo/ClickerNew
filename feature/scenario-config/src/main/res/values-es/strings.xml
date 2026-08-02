@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="section_title_detection_interval">Intervalo de Detección</string>
+    <string name="message_detection_interval_description">Ignora N fotogramas entre dos detecciones. 0 procesa todos los fotogramas</string>
+</resources>

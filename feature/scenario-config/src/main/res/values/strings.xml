@@ -139,6 +139,8 @@
       -->
     <string name="section_title_condition_detection_details">Detection details</string>
     <string name="section_title_condition_threshold">Tolerated difference</string>
+    <string name="section_title_detection_interval">Detection interval</string>
+    <string name="message_detection_interval_description">Ignores N frames between two detections. 0 processes all frames</string>
     <string name="section_title_detection_quality_title">Detection quality</string>
     <string name="section_title_end_condition">End conditions</string>
     <string name="section_title_intent_extras_value">Value</string>

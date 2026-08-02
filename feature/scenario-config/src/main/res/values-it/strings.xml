@@ -138,6 +138,8 @@
       -->
     <string name="section_title_condition_detection_details">Dettagli rilevamento</string>
     <string name="section_title_condition_threshold">Differenza tollerato</string>
+    <string name="section_title_detection_interval">Intervallo di rilevamento</string>
+    <string name="message_detection_interval_description">Ignora N fotogrammi tra due rilevamenti. 0 elabora tutti i fotogrammi</string>
     <string name="section_title_detection_quality_title">Qualità rilevamento</string>
     <string name="section_title_end_condition">Condizioni di fine</string>
     <string name="section_title_intent_extras_value">Valore</string>

@@ -51,6 +51,8 @@ import kotlinx.coroutines.yield
  * @param endConditions the list of end conditions for the current scenario.
  * @param onStopRequested called when a end condition of the scenario have been reached or all events are disabled.
  * @param progressListener the object to notify for detection progress. Can be null if not required.
+ * @param detectionFrameInterval the number of frames to ignore between two detections, in order to reduce the
+ *                               processing load. 0 means all frames are processed (default behaviour).
  */
 internal class ScenarioProcessor(
     private val imageDetector: ImageDetector,
@@ -63,6 +65,7 @@ internal class ScenarioProcessor(
     endConditions: List<EndCondition>,
     private val onStopRequested: () -> Unit,
     private val progressListener: ProgressListener? = null,
+    private val detectionFrameInterval: Int = 0,
 ) {
 
     /** Handle the processing state of the scenario. */
@@ -73,6 +76,9 @@ internal class ScenarioProcessor(
     private val endConditionVerifier = EndConditionVerifier(endConditions, endConditionOperator, onStopRequested)
     /** Keep track of the detection results during the processing. */
     private val processingResults = ProcessingResults(events)
+
+    /** The number of frames ignored since the last processed detection. */
+    private var framesSkippedSinceLastDetection = 0
 
     /** Tells if the screen metrics have been invalidated and should be updated. */
     private var invalidateScreenMetrics = true
@@ -90,6 +96,14 @@ internal class ScenarioProcessor(
      * @return the first Event with all conditions fulfilled, or null if none has been found.
      */
     suspend fun process(screenFrame: Bitmap) {
+        // Ignore the frames between two detections according to the detection frame interval, in order to reduce
+        // the processing load. 0 means all frames are processed.
+        if (detectionFrameInterval > 0 && framesSkippedSinceLastDetection < detectionFrameInterval) {
+            framesSkippedSinceLastDetection++
+            return
+        }
+        framesSkippedSinceLastDetection = 0
+
         // No more events enabled, there is nothing more to do. Stop the detection.
         if (scenarioState.areAllEventsDisabled()) {
             onStopRequested()

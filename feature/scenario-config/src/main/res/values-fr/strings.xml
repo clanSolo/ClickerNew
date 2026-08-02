@@ -141,6 +141,8 @@
       -->
     <string name="section_title_condition_detection_details">Détails de la détection</string>
     <string name="section_title_condition_threshold">Différence tolérée</string>
+    <string name="section_title_detection_interval">Intervalle de détection</string>
+    <string name="message_detection_interval_description">Ignore N images entre deux détections. 0 traite toutes les images</string>
     <string name="section_title_detection_quality_title">Qualité de détection</string>
     <string name="section_title_end_condition">Conditions de fin</string>
     <string name="section_title_intent_extras_value">Valeur</string>
