@@ -37,8 +37,6 @@ import kotlinx.serialization.Serializable
  *                             value of [com.buzbuz.smartautoclicker.domain.ConditionOperator].
  * @param randomize if true, the action values such as timers, positions will be shifted by a small random value in
  *                  order to avoid behaving like a bot.
- * @param detectionCaptureEnabled if true, a full screen capture is saved in the application external files directory
- *                                each time an event is detected.
  * @param detectionFrameInterval run the detection once every N frames, ignoring the frames in between in order to
  *                               reduce the processing load. 0 means all frames are processed.
  */
@@ -50,7 +48,6 @@ data class ScenarioEntity(
     @ColumnInfo(name = "detection_quality") val detectionQuality: Int,
     @ColumnInfo(name = "end_condition_operator") val endConditionOperator: Int,
     @ColumnInfo(name = "randomize", defaultValue="0") val randomize: Boolean = false,
-    @ColumnInfo(name = "detection_capture_enabled", defaultValue="0") val detectionCaptureEnabled: Boolean = false,
     @ColumnInfo(name = "detection_frame_interval", defaultValue="0") val detectionFrameInterval: Int = 0,
 )
 

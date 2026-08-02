@@ -32,6 +32,7 @@ import com.buzbuz.smartautoclicker.core.ui.overlays.dialog.MultiChoiceDialog
 import com.buzbuz.smartautoclicker.core.ui.overlays.dialog.NavBarDialogContent
 import com.buzbuz.smartautoclicker.core.domain.model.action.Action
 import com.buzbuz.smartautoclicker.feature.scenario.config.R
+import com.buzbuz.smartautoclicker.feature.scenario.config.ui.action.capture.CaptureDialog
 import com.buzbuz.smartautoclicker.feature.scenario.config.ui.action.click.ClickDialog
 import com.buzbuz.smartautoclicker.feature.scenario.config.ui.action.copy.ActionCopyDialog
 import com.buzbuz.smartautoclicker.feature.scenario.config.ui.action.intent.IntentDialog
@@ -238,6 +239,12 @@ class ActionsContent(appContext: Context) : NavBarDialogContent(appContext) {
             )
 
             is Action.ToggleEvent -> ToggleEventDialog(
+                onConfirmClicked = viewModel::upsertEditedAction,
+                onDeleteClicked = viewModel::removeEditedAction,
+                onDismissClicked = viewModel::dismissEditedAction,
+            )
+
+            is Action.Capture -> CaptureDialog(
                 onConfirmClicked = viewModel::upsertEditedAction,
                 onDeleteClicked = viewModel::removeEditedAction,
                 onDismissClicked = viewModel::dismissEditedAction,

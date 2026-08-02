@@ -18,6 +18,7 @@ package com.buzbuz.smartautoclicker.core.processing.data
 
 import android.accessibilityservice.GestureDescription
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Path
 import android.util.Log
 
@@ -45,11 +46,14 @@ import kotlin.random.Random
  * @param androidExecutor the executor for the actions requiring an interaction with Android.
  * @param scenarioEditor the executor for the actions modifying the scenario processing.
  * @param randomize true to randomize the actions values a bit (positions, timers...), false to be precise.
+ * @param screenCaptureExecutor called with the current screen frame when a capture action is executed. Can be null
+ * if no capture actions are present in the detected events.
  */
 internal class ActionExecutor(
     private val androidExecutor: AndroidExecutor,
     private val scenarioEditor: ScenarioEditor,
     private val randomize: Boolean,
+    private val screenCaptureExecutor: ((Bitmap) -> Unit)? = null,
 ) {
 
     private val random = Random(System.currentTimeMillis())
@@ -58,8 +62,14 @@ internal class ActionExecutor(
      * Execute the provided actions.
      * @param actions the actions to be executed.
      * @param processingResults contains the detection results for actions that needs context.
+     * @param screenFrame the bitmap containing the current screen display, used by the capture actions.
      */
-    suspend fun executeActions(event: Event, actions: List<Action>, processingResults: ProcessingResults) {
+    suspend fun executeActions(
+        event: Event,
+        actions: List<Action>,
+        processingResults: ProcessingResults,
+        screenFrame: Bitmap? = null,
+    ) {
         actions.forEach { action ->
             when (action) {
                 is Click -> executeClick(event, action, processingResults)
@@ -67,8 +77,22 @@ internal class ActionExecutor(
                 is Pause -> executePause(action)
                 is Action.Intent -> executeIntent(action)
                 is ToggleEvent -> executeToggleEvent(action)
+                is Action.Capture -> executeCapture(screenFrame)
             }
         }
+    }
+
+    /**
+     * Execute the provided capture.
+     * @param screenFrame the bitmap containing the current screen display.
+     */
+    private fun executeCapture(screenFrame: Bitmap?) {
+        if (screenFrame == null) {
+            Log.w(TAG, "Capture action can't be executed, no screen frame available")
+            return
+        }
+
+        screenCaptureExecutor?.invoke(screenFrame)
     }
 
     /**

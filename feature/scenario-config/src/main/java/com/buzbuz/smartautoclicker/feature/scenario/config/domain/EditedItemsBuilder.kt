@@ -144,12 +144,20 @@ class EditedItemsBuilder internal constructor(
             toggleEventType = defaultValues.toggleEventType(),
         )
 
+    fun createNewCapture(context: Context): Action.Capture =
+        Action.Capture(
+            id = actionsIdCreator.generateNewIdentifier(),
+            eventId = getEditedEventIdOrThrow(),
+            name = defaultValues.captureName(context),
+        )
+
     fun createNewActionFrom(from: Action, eventId: Identifier = getEditedEventIdOrThrow()): Action = when (from) {
         is Action.Click -> createNewClickFrom(from, eventId)
         is Action.Swipe -> createNewSwipeFrom(from, eventId)
         is Action.Pause -> createNewPauseFrom(from, eventId)
         is Action.Intent -> createNewIntentFrom(from, eventId)
         is Action.ToggleEvent -> createNewToggleEventFrom(from, eventId)
+        is Action.Capture -> createNewCaptureFrom(from, eventId)
     }
 
     private fun createNewClickFrom(from: Action.Click, eventId: Identifier): Action.Click {
@@ -206,6 +214,13 @@ class EditedItemsBuilder internal constructor(
             toggleEventId = toggleEventId,
         )
     }
+
+    private fun createNewCaptureFrom(from: Action.Capture, eventId: Identifier): Action.Capture =
+        from.copy(
+            id = actionsIdCreator.generateNewIdentifier(),
+            eventId = eventId,
+            name = "" + from.name,
+        )
 
     fun createNewIntentExtra() : IntentExtra<Any> =
         IntentExtra(

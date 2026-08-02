@@ -96,27 +96,6 @@ class ScenarioConfigViewModel(application: Application) : AndroidViewModel(appli
         }
         .filterNotNull()
 
-    private val enabledDetectionCapture = DropdownItem(
-        title = R.string.dropdown_item_title_detection_capture_enabled,
-        helperText = R.string.dropdown_helper_text_detection_capture_enabled,
-    )
-    private val disabledDetectionCapture = DropdownItem(
-        title = R.string.dropdown_item_title_detection_capture_disabled,
-        helperText = R.string.dropdown_helper_text_detection_capture_disabled,
-    )
-    /** The items available for the detection capture dropdown. */
-    val detectionCaptureItems = listOf(enabledDetectionCapture, disabledDetectionCapture)
-
-    /** The detection capture value for the scenario. */
-    val detectionCapture: Flow<DropdownItem> = configuredScenario
-        .map {
-            when (it.detectionCaptureEnabled) {
-                true -> enabledDetectionCapture
-                false -> disabledDetectionCapture
-            }
-        }
-        .filterNotNull()
-
     /** The detection frame interval for the scenario. */
     val detectionInterval: Flow<Int?> = configuredScenario
         .map { it.detectionFrameInterval }
@@ -185,21 +164,6 @@ class ScenarioConfigViewModel(application: Application) : AndroidViewModel(appli
 
             viewModelScope.launch {
                 editionRepository.updateEditedScenario(scenario.copy(randomize = value))
-            }
-        }
-    }
-
-    /** Toggle the detection capture value. */
-    fun setDetectionCapture(detectionCaptureItem: DropdownItem) {
-        editionRepository.editionState.getScenario()?.let { scenario ->
-            val value = when (detectionCaptureItem) {
-                enabledDetectionCapture -> true
-                disabledDetectionCapture -> false
-                else -> return
-            }
-
-            viewModelScope.launch {
-                editionRepository.updateEditedScenario(scenario.copy(detectionCaptureEnabled = value))
             }
         }
     }

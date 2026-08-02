@@ -209,6 +209,24 @@ sealed class Action {
 
         override fun deepCopy(): ToggleEvent = copy(name = "" + name)
     }
+
+    /**
+     * Capture Action.
+     * Saves a capture of the whole screen in the application external files directory when executed. It has no
+     * additional configuration.
+     *
+     * @param id the unique identifier for the action.
+     * @param eventId the identifier of the event for this action.
+     * @param name the name of the action.
+     */
+    data class Capture(
+        override val id: Identifier,
+        override val eventId: Identifier,
+        override val name: String? = null,
+    ) : Action() {
+
+        override fun deepCopy(): Capture = copy(name = "" + name)
+    }
 }
 
 /** The maximum supported duration for a gesture. This limitation comes from Android GestureStroke API.  */

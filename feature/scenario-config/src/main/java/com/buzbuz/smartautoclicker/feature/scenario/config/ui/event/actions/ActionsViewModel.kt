@@ -85,6 +85,7 @@ class ActionsViewModel(application: Application) : AndroidViewModel(application)
                 add(ActionTypeChoice.Pause)
                 add(ActionTypeChoice.Intent(isProModePurchased))
                 add(ActionTypeChoice.ToggleEvent(isProModePurchased))
+                add(ActionTypeChoice.Capture)
             }
         }.stateIn(
             viewModelScope,
@@ -107,6 +108,7 @@ class ActionsViewModel(application: Application) : AndroidViewModel(application)
         is ActionTypeChoice.Pause -> editionRepository.editedItemsBuilder.createNewPause(context)
         is ActionTypeChoice.Intent -> editionRepository.editedItemsBuilder.createNewIntent(context)
         is ActionTypeChoice.ToggleEvent -> editionRepository.editedItemsBuilder.createNewToggleEvent(context)
+        is ActionTypeChoice.Capture -> editionRepository.editedItemsBuilder.createNewCapture(context)
     }
 
     /**
@@ -211,5 +213,12 @@ sealed class ActionTypeChoice(
         R.string.item_desc_toggle_event,
         R.drawable.ic_toggle_event,
         enabled = enabled,
+    )
+    /** Capture Action choice. */
+    object Capture : ActionTypeChoice(
+        R.string.item_title_capture,
+        R.string.item_desc_capture,
+        R.drawable.ic_capture,
+        enabled = true,
     )
 }

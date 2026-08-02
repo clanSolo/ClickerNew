@@ -31,6 +31,7 @@ internal fun Action.toEntity(): CompleteActionEntity = when (this) {
     is Action.Pause -> toPauseEntity()
     is Action.Intent -> toIntentEntity()
     is Action.ToggleEvent -> toToggleEventEntity()
+    is Action.Capture -> toCaptureEntity()
 }
 
 private fun Action.Click.toClickEntity(): CompleteActionEntity {
@@ -121,6 +122,20 @@ private fun Action.ToggleEvent.toToggleEventEntity(): CompleteActionEntity {
     )
 }
 
+private fun Action.Capture.toCaptureEntity(): CompleteActionEntity {
+    if (!isComplete()) throw IllegalStateException("Can't transform to entity, Capture is incomplete.")
+
+    return CompleteActionEntity(
+        action = ActionEntity(
+            id = id.databaseId,
+            eventId = eventId.databaseId,
+            name = name!!,
+            type = ActionType.CAPTURE,
+        ),
+        intentExtras = emptyList(),
+    )
+}
+
 /** Convert an Action entity into a Domain Action. */
 internal fun CompleteActionEntity.toAction(asDomain: Boolean = false): Action = when (action.type) {
     ActionType.CLICK -> toClick(asDomain)
@@ -128,6 +143,7 @@ internal fun CompleteActionEntity.toAction(asDomain: Boolean = false): Action = 
     ActionType.PAUSE -> toPause(asDomain)
     ActionType.INTENT -> toIntent(asDomain)
     ActionType.TOGGLE_EVENT -> toToggleEvent(asDomain)
+    ActionType.CAPTURE -> toCapture(asDomain)
 }
 
 private fun CompleteActionEntity.toClick(asDomain: Boolean = false) = Action.Click(
@@ -177,6 +193,12 @@ private fun CompleteActionEntity.toToggleEvent(asDomain: Boolean = false) = Acti
     name = action.name,
     toggleEventId = Identifier(id = action.toggleEventId!!, asDomain = asDomain),
     toggleEventType = action.toggleEventType!!.toDomain(),
+)
+
+private fun CompleteActionEntity.toCapture(asDomain: Boolean = false) = Action.Capture(
+    id = Identifier(id = action.id, asDomain = asDomain),
+    eventId = Identifier(id = action.eventId, asDomain = asDomain),
+    name = action.name,
 )
 
 private fun ClickPositionType.toDomain(): Action.Click.PositionType =

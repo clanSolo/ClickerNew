@@ -141,6 +141,7 @@ internal class ScenarioSerializer {
                 ?.coerceIn(OPERATOR_LOWER_BOUND, OPERATOR_UPPER_BOUND)
                 ?: OPERATOR_DEFAULT_VALUE,
             randomize = getBoolean("randomize") ?: false,
+            detectionFrameInterval = getInt("detectionFrameInterval")?.coerceAtLeast(0) ?: 0,
         )
     }
 
@@ -261,6 +262,7 @@ internal class ScenarioSerializer {
             ActionType.PAUSE -> deserializePauseActionCompat()
             ActionType.INTENT -> deserializeIntentActionCompat()
             ActionType.TOGGLE_EVENT -> deserializeToggleEventActionCompat()
+            ActionType.CAPTURE -> deserializeCaptureActionCompat()
             else -> null
         }
 
@@ -407,6 +409,21 @@ internal class ScenarioSerializer {
             type = ActionType.TOGGLE_EVENT,
             toggleEventId = toggleEventId,
             toggleEventType = getEnum<ToggleEventType>("toggleEventType"),
+        )
+    }
+
+    /** @return the deserialized capture action. */
+    @VisibleForTesting
+    internal fun JsonObject.deserializeCaptureActionCompat(): ActionEntity? {
+        val id = getLong("id", true) ?: return null
+        val eventId = getLong("eventId", true) ?: return null
+
+        return ActionEntity(
+            id = id,
+            eventId = eventId,
+            name = getString("name") ?: "",
+            priority = getInt("priority")?.coerceAtLeast(0) ?: 0,
+            type = ActionType.CAPTURE,
         )
     }
 

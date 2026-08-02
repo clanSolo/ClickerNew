@@ -28,6 +28,7 @@ import com.buzbuz.smartautoclicker.core.display.DisplayRecorder
 import com.buzbuz.smartautoclicker.core.display.DisplayMetrics
 import com.buzbuz.smartautoclicker.core.detection.ImageDetector
 import com.buzbuz.smartautoclicker.core.detection.NativeDetector
+import com.buzbuz.smartautoclicker.core.domain.model.action.Action
 import com.buzbuz.smartautoclicker.core.domain.model.endcondition.EndCondition
 import com.buzbuz.smartautoclicker.core.domain.model.event.Event
 import com.buzbuz.smartautoclicker.core.domain.model.scenario.Scenario
@@ -189,7 +190,7 @@ internal class DetectorEngine(context: Context) {
                 endConditions =  endConditions,
                 onStopRequested = { stopDetection() },
                 progressListener  = progressListener,
-                detectionCaptureListener = buildDetectionCaptureListener(context, scenario),
+                screenCaptureExecutor = buildScreenCaptureExecutor(context, events),
             )
 
             processScreenImages()
@@ -197,22 +198,23 @@ internal class DetectorEngine(context: Context) {
     }
 
     /**
-     * Build the listener saving a capture of the screen frame when an event is detected, if enabled for this scenario.
+     * Build the executor saving a capture of the screen frame when a capture action is executed, if any event of the
+     * scenario contains a capture action.
      *
      * @param context the Android context.
-     * @param scenario the scenario to be detected.
+     * @param events the events of the scenario to be detected.
      *
-     * @return the capture listener, or null if the captures are disabled for this scenario.
+     * @return the capture executor, or null if no capture actions are present in the events.
      */
-    private fun buildDetectionCaptureListener(context: Context, scenario: Scenario): ((Bitmap) -> Unit)? {
-        if (!scenario.detectionCaptureEnabled) return null
+    private fun buildScreenCaptureExecutor(context: Context, events: List<Event>): ((Bitmap) -> Unit)? {
+        if (events.none { event -> event.actions.any { action -> action is Action.Capture } }) return null
 
         val bitmapManager = BitmapManager.getBitmapManager(context)
         var lastCaptureTimestamp = 0L
-        return listener@{ screenFrame ->
-            // Throttle the captures to avoid spamming the device storage and the CPU when detections are frequent
+        return executor@{ screenFrame ->
+            // Throttle the captures to avoid spamming the device storage and the CPU when captures are frequent
             val now = System.currentTimeMillis()
-            if (now - lastCaptureTimestamp < SCREEN_CAPTURE_MIN_INTERVAL_MS) return@listener
+            if (now - lastCaptureTimestamp < SCREEN_CAPTURE_MIN_INTERVAL_MS) return@executor
             lastCaptureTimestamp = now
 
             // The screen frame bitmap is reused by the recorder for the next screen images, copy it before saving

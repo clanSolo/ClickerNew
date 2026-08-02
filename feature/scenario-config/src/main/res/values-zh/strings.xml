@@ -33,6 +33,7 @@
     <string name="dialog_overlay_title_intent">意图</string>
     <string name="dropdown_label_intent_extra_value_type">参数值类型</string>
     <string name="dialog_overlay_title_pause">等待</string>
+    <string name="dialog_overlay_title_capture">截图</string>
     <string name="dialog_overlay_title_scenario_config">场景</string>
     <string name="dialog_overlay_title_swipe">滑动</string>
     <string name="dialog_overlay_title_toggle_event">场景状态</string>
@@ -76,6 +77,7 @@
     <string name="item_desc_swipe_positions">从 (%1$d, %2$d) 滑动到 (%3$d, %4$d)</string>
     <string name="item_desc_toggle_event">启用或禁用某场景</string>
     <string name="item_desc_toggle_event_details">将场景状态设置为： %1$s</string>
+    <string name="item_desc_capture_details">将全屏截图保存到 Android/data/com.buzbuz.smartautoclicker/files/capturas</string>
     <string name="item_error_action_invalid_generic">"此操作无效 "</string>
     <string name="item_error_action_invalid_toggle_event_target">"未找到目标事件 "</string>
     <string name="item_title_click">单击</string>
@@ -93,6 +95,7 @@
     <string name="item_title_pause">等待</string>
     <string name="item_title_swipe">滑动</string>
     <string name="item_title_toggle_event">修改场景状态</string>
+    <string name="item_title_capture">屏幕截图</string>
 
     <!--
       - Empty list messages.
@@ -205,11 +208,6 @@
     <string name="dropdown_item_title_anti_detection_disabled">禁用</string>
     <string name="dropdown_helper_text_anti_detection_enabled">在单击、滑动和等待中，增加一个很小的随机值，使点击、滑动的坐标以及延迟时间有一定的差异。</string>
     <string name="dropdown_helper_text_anti_detection_disabled">不启用防作弊，按照设置的值执行</string>
-    <string name="input_field_label_detection_capture">屏幕截图</string>
-    <string name="dropdown_item_title_detection_capture_enabled">启用</string>
-    <string name="dropdown_item_title_detection_capture_disabled">禁用</string>
-    <string name="dropdown_helper_text_detection_capture_enabled">每次检测到事件时，将完整屏幕截图保存到 Android/data/com.buzbuz.smartautoclicker/files/capturas</string>
-    <string name="dropdown_helper_text_detection_capture_disabled">检测到事件时不保存屏幕截图</string>
     <string name="section_title_detection_interval">检测间隔</string>
     <string name="message_detection_interval_description">每 N 帧检测一次。0 处理所有帧</string>
 

@@ -32,6 +32,7 @@
     <string name="dialog_overlay_title_event_selection">Seleziona un evento</string>
     <string name="dialog_overlay_title_intent">Intento</string>
     <string name="dialog_overlay_title_pause">Attendi</string>
+    <string name="dialog_overlay_title_capture">Cattura</string>
     <string name="dialog_overlay_title_scenario_config">Scenario</string>
     <string name="dialog_overlay_title_swipe">Scorri</string>
     <string name="dialog_overlay_title_toggle_event">Stato evento</string>
@@ -75,6 +76,7 @@
     <string name="item_desc_swipe_positions">Scorri da %1$d, %2$d a %3$d, %4$d</string>
     <string name="item_desc_toggle_event">Cambia lo stato di abilitazione di un evento</string>
     <string name="item_desc_toggle_event_details">Cambia stato dell\'evento con tipo %1$s</string>
+    <string name="item_desc_capture_details">Salva una cattura dello schermo completo in Android/data/com.buzbuz.smartautoclicker/files/capturas</string>
     <string name="item_error_action_invalid_generic">"Questa azione non è valida "</string>
     <string name="item_error_action_invalid_toggle_event_target">"Evento di destinazione non trovato "</string>
     <string name="item_title_click">Clic</string>
@@ -92,6 +94,7 @@
     <string name="item_title_pause">Attendi</string>
     <string name="item_title_swipe">Scorri</string>
     <string name="item_title_toggle_event">Cambia stato evento</string>
+    <string name="item_title_capture">Cattura schermo</string>
 
     <!--
       - Empty list messages.
@@ -204,11 +207,6 @@
     <string name="dropdown_item_title_anti_detection_disabled">Disabilitato</string>
     <string name="dropdown_helper_text_anti_detection_enabled">Rendi la durata e posizione dei clic e scorrimenti casuali rispetto ad un piccolo intervallo</string>
     <string name="dropdown_helper_text_anti_detection_disabled">Esegui tutte le azioni come dichiarate</string>
-    <string name="input_field_label_detection_capture">Cattura schermata</string>
-    <string name="dropdown_item_title_detection_capture_enabled">Abilitata</string>
-    <string name="dropdown_item_title_detection_capture_disabled">Disabilitata</string>
-    <string name="dropdown_helper_text_detection_capture_enabled">Salva una cattura completa dello schermo in Android/data/com.buzbuz.smartautoclicker/files/capturas a ogni evento rilevato</string>
-    <string name="dropdown_helper_text_detection_capture_disabled">Nessuna cattura dello schermo viene salvata quando viene rilevato un evento</string>
     <string name="section_title_detection_interval">Intervallo di rilevamento</string>
     <string name="message_detection_interval_description">Rileva una volta ogni N fotogrammi. 0 elabora tutti i fotogrammi</string>
 

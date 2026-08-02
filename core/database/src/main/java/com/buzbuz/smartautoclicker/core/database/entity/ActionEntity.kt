@@ -143,6 +143,8 @@ enum class ActionType {
     INTENT,
     /** Toggle the enabled state of an event. */
     TOGGLE_EVENT,
+    /** Save a capture of the whole screen on the device storage. */
+    CAPTURE,
 }
 
 /** Type converter to read/write the [ActionType] into the database. */
