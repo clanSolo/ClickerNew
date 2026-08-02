@@ -114,7 +114,7 @@ class MainMenuModel(application: Application) : AndroidViewModel(application) {
 
     private fun startDetection(context: Context, onStoppedByLimitation: () -> Unit) {
         viewModelScope.launch {
-            detectionRepository.startDetection(context, debugRepository.detectionProgressListener)
+            detectionRepository.startDetection(context, debugRepository.getDebugProgressListener(context))
         }
 
         if (!isProModePurchased.value) {
