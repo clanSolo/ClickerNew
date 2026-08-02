@@ -19,13 +19,6 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.devtools.ksp'
 apply plugin: 'kotlin-android'
 
-// Only apply gms/firebase plugins if we are building for the play store
-def isPlayStoreBuild = getGradle().getStartParameter().getTaskRequests().toString().contains("PlayStore")
-if (isPlayStoreBuild) {
-    apply plugin: "com.google.gms.google-services"
-    apply plugin: "com.google.firebase.crashlytics"
-}
-
 // Read signing.properties file to find signing configuration
 def signingProperties = new Properties()
 def signingStoreFile = file('./smartautoclicker.jks')
@@ -78,28 +71,10 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-
-            if (isPlayStoreBuild) {
-                firebaseCrashlytics {
-                    nativeSymbolUploadEnabled true
-                    unstrippedNativeLibsDir 'build/intermediates/merged_native_libs/playStoreRelease/out/lib'
-                }
-            }
         }
 
         debug {
             applicationIdSuffix '.debug'
-        }
-    }
-
-    // Specifies one flavor dimension.
-    flavorDimensions += "version"
-    productFlavors {
-        create("fDroid") {
-            dimension = "version"
-        }
-        create("playStore") {
-            dimension = "version"
         }
     }
 
@@ -130,11 +105,6 @@ dependencies {
     implementation "com.airbnb.android:lottie:$lottieVersion"
     implementation "com.google.android.material:material:${rootProject.ext.googleMaterialVersion}"
 
-    // Google Play Store version dependencies only
-    playStoreImplementation platform("com.google.firebase:firebase-bom:${rootProject.ext.firebaseBomVersion}")
-    playStoreImplementation 'com.google.firebase:firebase-crashlytics-ktx'
-    playStoreImplementation 'com.google.firebase:firebase-crashlytics-ndk'
-
     implementation project(path: ':core:detection')
     implementation project(path: ':core:display')
     implementation project(path: ':core:domain')
@@ -147,12 +117,4 @@ dependencies {
     implementation project(path: ':feature:scenario-config')
     implementation project(path: ':feature:scenario-debugging')
     implementation project(path: ':feature:tutorial')
-}
-
-project.afterEvaluate {
-    tasks.findAll { task ->
-        task.name.startsWith("generateCrashlyticsSymbolFilePlayStoreRelease")
-    }.forEach {task ->
-        task.dependsOn("mergePlayStoreReleaseNativeLibs")
-    }
 }
