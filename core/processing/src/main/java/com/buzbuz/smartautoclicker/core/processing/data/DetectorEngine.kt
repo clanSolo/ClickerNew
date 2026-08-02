@@ -23,6 +23,7 @@ import android.media.Image
 import android.media.projection.MediaProjectionManager
 import android.util.Log
 
+import com.buzbuz.smartautoclicker.core.bitmaps.BitmapManager
 import com.buzbuz.smartautoclicker.core.display.DisplayRecorder
 import com.buzbuz.smartautoclicker.core.display.DisplayMetrics
 import com.buzbuz.smartautoclicker.core.detection.ImageDetector
@@ -199,12 +200,12 @@ internal class DetectorEngine(context: Context) {
     private fun buildDetectionCaptureListener(context: Context, scenario: Scenario): ((Bitmap) -> Unit)? {
         if (!scenario.detectionCaptureEnabled) return null
 
-        val captureSaver = CaptureSaver(context)
+        val bitmapManager = BitmapManager.getBitmapManager(context)
         return { screenFrame ->
             // The screen frame bitmap is reused by the recorder for the next screen images, copy it before saving
             // it asynchronously on the processing scope.
             val frameCopy = Bitmap.createBitmap(screenFrame)
-            processingScope?.launch { captureSaver.save(frameCopy) }
+            processingScope?.launch { bitmapManager.saveScreenCapture(frameCopy) }
         }
     }
 
