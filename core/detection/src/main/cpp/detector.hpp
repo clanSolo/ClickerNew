@@ -17,10 +17,29 @@
 
 #include <jni.h>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <unordered_map>
 
 #include "types/detectionResult.hpp"
 
 namespace smartautoclicker {
+
+    /**
+     * Precomputed detection data for a condition.
+     * Conditions bitmaps never change during a detection session, so their gray scaled version, color mean and
+     * dimensions are computed only once in Detector::prepareCondition instead of at every detection.
+     */
+    struct PreparedCondition {
+        /** Gray scaled version of the condition bitmap, used by the template matching. */
+        cv::Mat scaledGrayCondition;
+        /** Mean of the color of the condition bitmap, used by the color verification. */
+        cv::Scalar colorMean;
+        /** Width of the full size condition bitmap. */
+        int fullWidth = 0;
+        /** Height of the full size condition bitmap. */
+        int fullHeight = 0;
+        /** Scratch buffer for the template matching results, reused between detections to avoid allocations. */
+        cv::Mat matchingResults;
+    };
 
     class Detector {
 
@@ -30,14 +49,17 @@ namespace smartautoclicker {
         std::unique_ptr<cv::Mat> fullSizeColorCurrentImage = nullptr;
         std::unique_ptr<cv::Mat> scaledGrayCurrentImage = std::make_unique<cv::Mat>();
 
+        /** The detection data for the conditions, prepared once per session and keyed by condition id. */
+        std::unordered_map<jlong, PreparedCondition> preparedConditions;
+
         DetectionResult detectionResult;
 
         std::unique_ptr<cv::Mat> scaleAndChangeToGray(const cv::Mat &fullSizeColored) const;
 
-        static std::unique_ptr<cv::Mat> matchTemplate(const cv::Mat& image, const cv::Mat& condition);
+        static void matchTemplate(const cv::Mat& image, const cv::Mat& condition, cv::Mat& results);
         static void locateMinMax(const cv::Mat& matchingResult, DetectionResult& results);
         static bool isValidMatching(const DetectionResult& results, const int threshold);
-        static double getColorDiff(const cv::Mat& image, const cv::Mat& condition);
+        static double getColorDiff(const cv::Mat& image, const cv::Scalar& conditionColorMean);
 
         cv::Rect getDetectionResultScaledCroppedRoi(int scaledWidth, int scaledHeight) const;
         cv::Rect getDetectionResultFullSizeRoi(const cv::Rect& detectionRoi, int fullSizeWidth, int fullSizeHeight) const;
@@ -45,7 +67,7 @@ namespace smartautoclicker {
         static bool isRoiOutOfBounds(const cv::Rect &roi, const cv::Mat &image);
         static void markRoiAsInvalidInResults(const cv::Mat& results, const cv::Rect& roi);
 
-        DetectionResult detectCondition(JNIEnv *env, jobject conditionImage, cv::Rect fullSizeDetectionRoi, int threshold);
+        DetectionResult detectCondition(JNIEnv *env, jlong conditionId, cv::Rect fullSizeDetectionRoi, int threshold);
 
     public:
 
@@ -55,9 +77,10 @@ namespace smartautoclicker {
 
         void setScreenImage(JNIEnv *env, jobject screenImage);
 
-        DetectionResult detectCondition(JNIEnv *env, jobject conditionImage, int threshold);
-        DetectionResult detectCondition(JNIEnv *env, jobject conditionImage, int x, int y, int width, int height, int threshold);
+        void prepareCondition(JNIEnv *env, jlong conditionId, jobject conditionImage);
+
+        DetectionResult detectCondition(JNIEnv *env, jlong conditionId, int threshold);
+        DetectionResult detectCondition(JNIEnv *env, jlong conditionId, int x, int y, int width, int height, int threshold);
     };
 }
-
 

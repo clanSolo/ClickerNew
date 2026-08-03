@@ -67,6 +67,8 @@ internal class DetectorEngine(context: Context) {
     private var scenarioProcessor: ScenarioProcessor? = null
     /** Detect the condition images on the screen image. */
     private var imageDetector: ImageDetector? = null
+    /** The number of frames to ignore between two detections for the current scenario. */
+    private var detectionFrameInterval: Int = 0
     /** The executor for the actions requiring an interaction with Android. */
     private var androidExecutor: AndroidExecutor? = null
 
@@ -181,8 +183,9 @@ internal class DetectorEngine(context: Context) {
                 endConditions =  endConditions,
                 onStopRequested = { stopDetection() },
                 progressListener  = progressListener,
-                detectionFrameInterval = scenario.detectionFrameInterval,
             )
+
+            detectionFrameInterval = scenario.detectionFrameInterval
 
             processScreenImages()
         }
@@ -236,6 +239,7 @@ internal class DetectorEngine(context: Context) {
             imageDetector?.close()
             imageDetector = null
             scenarioProcessor = null
+            detectionFrameInterval = 0
             detectionProgressListener?.onSessionEnded()
             detectionProgressListener = null
 
@@ -277,13 +281,25 @@ internal class DetectorEngine(context: Context) {
     }
 
     /** Process the latest images provided by the [DisplayRecorder]. */
+    /** Process the latest images provided by the [DisplayRecorder], ignoring frames according to [detectionFrameInterval]. */
     private suspend fun processScreenImages() {
         _state.emit(DetectorState.DETECTING)
 
         scenarioProcessor?.invalidateScreenMetrics()
+
+        // The number of frames to discard before the next processed one
+        var framesToSkip = 0
         while (processingJob?.isActive == true) {
+            // Discard the frames to be ignored between two detections directly from the recorder, without copying
+            // their pixels. This avoids a useless full screen bitmap copy per ignored frame.
+            if (framesToSkip > 0) {
+                if (displayRecorder.discardLatestFrame()) framesToSkip-- else delay(NO_IMAGE_DELAY_MS)
+                continue
+            }
+
             displayRecorder.acquireLatestBitmap()?.let { screenFrame ->
                 scenarioProcessor?.process(screenFrame)
+                framesToSkip = detectionFrameInterval
             } ?: delay(NO_IMAGE_DELAY_MS)
         }
     }

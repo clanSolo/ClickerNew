@@ -106,7 +106,7 @@ class DetectionRepository private constructor(context: Context) {
         }
     }
 
-    suspend fun startDetection(context: Context, progressListener: ProgressListener) {
+    suspend fun startDetection(context: Context, progressListener: ProgressListener? = null) {
         val id = scenarioId.value?.databaseId ?: return
         val scenario = scenarioRepository.getScenario(id) ?: return
         val events = scenarioRepository.getEvents(id)
