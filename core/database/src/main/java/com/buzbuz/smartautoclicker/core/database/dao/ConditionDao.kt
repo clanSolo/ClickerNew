@@ -77,6 +77,17 @@ abstract class ConditionDao {
      * Update a condition in the database.
      * @param conditions the condition to be updated.
      */
+    /**
+     * Converts the legacy whole screen conditions (detection_type = 2) into in area ones targeting the full display.
+     * The provided size should be the biggest display dimension: the detection area will be clamped to the actual
+     * screen bounds by the detection engine, acting exactly as the previous whole screen detection.
+     *
+     * @param maxSize the biggest dimension of the display, in pixels.
+     */
+    @Query("UPDATE condition_table SET detection_type = 3, detection_area_left = 0, detection_area_top = 0, " +
+            "detection_area_right = :maxSize, detection_area_bottom = :maxSize WHERE detection_type = 2")
+    abstract suspend fun convertLegacyWholeScreenConditions(maxSize: Int)
+
     @Update
     abstract suspend fun updateConditions(conditions: List<ConditionEntity>)
 

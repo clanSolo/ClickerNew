@@ -24,7 +24,6 @@ import androidx.core.content.ContextCompat
 import com.buzbuz.smartautoclicker.core.domain.model.condition.Condition
 import com.buzbuz.smartautoclicker.core.domain.model.EXACT
 import com.buzbuz.smartautoclicker.core.domain.model.IN_AREA
-import com.buzbuz.smartautoclicker.core.domain.model.WHOLE_SCREEN
 import com.buzbuz.smartautoclicker.feature.scenario.config.R
 import com.buzbuz.smartautoclicker.feature.scenario.config.databinding.ItemConditionBinding
 import com.buzbuz.smartautoclicker.feature.scenario.config.utils.setIconTint
@@ -57,7 +56,6 @@ fun ItemConditionBinding.bind(
         setImageResource(
             when (condition.detectionType) {
                 EXACT -> R.drawable.ic_detect_exact
-                WHOLE_SCREEN -> R.drawable.ic_detect_whole_screen
                 IN_AREA -> R.drawable.ic_detect_in_area
                 else -> return@apply
             }

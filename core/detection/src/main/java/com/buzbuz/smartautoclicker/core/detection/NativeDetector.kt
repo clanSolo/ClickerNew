@@ -73,13 +73,6 @@ class NativeDetector : ImageDetector {
         nativePrepareCondition(conditionId, conditionBitmap)
     }
 
-    override fun detectCondition(conditionId: Long, threshold: Int): DetectionResult {
-        if (isClosed) return detectionResult.copy()
-
-        detect(conditionId, threshold, detectionResult)
-        return detectionResult.copy()
-    }
-
     override fun detectCondition(conditionId: Long, position: Rect, threshold: Int): DetectionResult {
         if (isClosed) return detectionResult.copy()
 
@@ -124,15 +117,6 @@ class NativeDetector : ImageDetector {
      * @param conditionBitmap the bitmap of the condition.
      */
     private external fun nativePrepareCondition(conditionId: Long, conditionBitmap: Bitmap)
-
-    /**
-     * Native method for detecting if the prepared condition is in the whole current screen bitmap.
-     *
-     * @param conditionId the unique identifier of the condition.
-     * @param threshold the allowed error threshold allowed for the condition.
-     * @param result stores the results on this detection.
-     */
-    private external fun detect(conditionId: Long, threshold: Int, result: DetectionResult)
 
     /**
      * Native method for detecting if the prepared condition is at a specific position in the current screen bitmap.

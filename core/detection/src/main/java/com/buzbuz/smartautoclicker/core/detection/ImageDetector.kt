@@ -60,17 +60,6 @@ interface ImageDetector : AutoCloseable {
     fun prepareCondition(conditionId: Long, conditionBitmap: Bitmap)
 
     /**
-     * Detect if the condition is in the whole current screen bitmap.
-     * [setupDetection] and [prepareCondition] must have been called first.
-     *
-     * @param conditionId the unique identifier of the condition, as provided to [prepareCondition].
-     * @param threshold the allowed error threshold allowed for the condition.
-     *
-     * @return the results of the detection.
-     */
-    fun detectCondition(conditionId: Long, threshold: Int): DetectionResult
-
-    /**
      * Detect if the condition is at a specific position in the current screen bitmap.
      * [setupDetection] and [prepareCondition] must have been called first.
      *

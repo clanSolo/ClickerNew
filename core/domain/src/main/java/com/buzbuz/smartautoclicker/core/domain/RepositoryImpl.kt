@@ -84,6 +84,10 @@ internal class RepositoryImpl internal constructor(
     override fun getAllConditions(): Flow<List<Condition>> =
         dataSource.getAllConditions().mapList { it.toCondition() }
 
+    override suspend fun convertLegacyWholeScreenConditions(maxSize: Int) {
+        dataSource.convertLegacyWholeScreenConditions(maxSize)
+    }
+
     override suspend fun addScenario(scenario: Scenario): Long =
         dataSource.addScenario(scenario)
 

@@ -79,7 +79,6 @@ namespace smartautoclicker {
 
         void prepareCondition(JNIEnv *env, jlong conditionId, jobject conditionImage);
 
-        DetectionResult detectCondition(JNIEnv *env, jlong conditionId, int threshold);
         DetectionResult detectCondition(JNIEnv *env, jlong conditionId, int x, int y, int width, int height, int threshold);
     };
 }

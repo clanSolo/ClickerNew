@@ -67,6 +67,13 @@ interface Repository {
     val scenarios: Flow<List<Scenario>>
 
     /**
+     * Converts the legacy whole screen conditions into in area ones targeting the full display.
+     *
+     * @param maxSize the biggest dimension of the display, in pixels.
+     */
+    suspend fun convertLegacyWholeScreenConditions(maxSize: Int)
+
+    /**
      * Add a new scenario.
      *
      * @param scenario the scenario to add.

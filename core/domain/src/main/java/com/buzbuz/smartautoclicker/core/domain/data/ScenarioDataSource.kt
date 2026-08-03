@@ -123,8 +123,18 @@ internal class ScenarioDataSource(
     fun getAllConditions(): Flow<List<ConditionEntity>> =
         conditionsDaoFlow.flatMapLatest { it.getAllConditions() }
 
+    /**
+     * Converts the legacy whole screen conditions into in area ones targeting the full display.
+     *
+     * @param maxSize the biggest dimension of the display, in pixels.
+     */
+    suspend fun convertLegacyWholeScreenConditions(maxSize: Int) {
+        currentDatabase.value.conditionDao().convertLegacyWholeScreenConditions(maxSize)
+    }
+
     suspend fun addScenario(scenario: Scenario): Long {
         Log.d(TAG, "Add scenario to the database: ${scenario.id}")
+
         return currentDatabase.value.scenarioDao().add(scenario.toEntity())
     }
 

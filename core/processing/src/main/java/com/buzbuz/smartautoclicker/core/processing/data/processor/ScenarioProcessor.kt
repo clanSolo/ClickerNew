@@ -30,7 +30,6 @@ import com.buzbuz.smartautoclicker.core.domain.model.ConditionOperator
 import com.buzbuz.smartautoclicker.core.domain.model.EXACT
 import com.buzbuz.smartautoclicker.core.domain.model.IN_AREA
 import com.buzbuz.smartautoclicker.core.domain.model.OR
-import com.buzbuz.smartautoclicker.core.domain.model.WHOLE_SCREEN
 import com.buzbuz.smartautoclicker.core.processing.data.ActionExecutor
 import com.buzbuz.smartautoclicker.core.processing.data.AndroidExecutor
 import com.buzbuz.smartautoclicker.core.processing.data.EndConditionVerifier
@@ -235,7 +234,6 @@ internal class ScenarioProcessor(
     private fun detect(condition: Condition, conditionId: Long): DetectionResult =
          when (condition.detectionType) {
              EXACT -> imageDetector.detectCondition(conditionId, condition.area, condition.threshold)
-             WHOLE_SCREEN -> imageDetector.detectCondition(conditionId, condition.threshold)
              IN_AREA -> condition.detectionArea?.let { area ->
                  imageDetector.detectCondition(conditionId, area, condition.threshold)
              } ?: throw IllegalArgumentException("Invalid IN_AREA condition, no area defined")

@@ -104,7 +104,6 @@ class ConditionDialog(
                 label = context.getString(R.string.dropdown_label_condition_detection_type),
                 items = viewModel.detectionTypeItems,
                 onItemSelected = viewModel::setDetectionType,
-                onItemBound = ::onDetectionTypeDropdownItemBound,
                 onSelectorClicked = ::showDetectionAreaSelector,
             )
 
@@ -158,13 +157,6 @@ class ConditionDialog(
     private fun onDeleteClicked() {
         if (viewModel.isConditionRelatedToClick()) showAssociatedActionWarning()
         else confirmDelete()
-    }
-
-    private fun onDetectionTypeDropdownItemBound(item: DropdownItem, view: View?) {
-        if (item == viewModel.detectionTypeScreen) {
-            if (view != null) viewModel.monitorDropdownItemWholeScreenView(view)
-            else viewModel.stopDropdownItemWholeScreenViewMonitoring()
-        }
     }
 
     private fun updateConditionName(newName: String?) {

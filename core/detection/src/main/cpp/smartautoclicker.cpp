@@ -87,16 +87,6 @@ extern "C" {
         getObject(env, self)->prepareCondition(env, conditionId, conditionBitmap);
     }
 
-    JNIEXPORT void JNICALL Java_com_buzbuz_smartautoclicker_core_detection_NativeDetector_detect(
-            JNIEnv *env,
-            jobject self,
-            jlong conditionId,
-            jint threshold,
-            jobject result
-    ) {
-        setDetectionResult(env, result, getObject(env, self)->detectCondition(env, conditionId, threshold));
-    }
-
     JNIEXPORT void JNICALL Java_com_buzbuz_smartautoclicker_core_detection_NativeDetector_detectAt(
             JNIEnv *env,
             jobject self,

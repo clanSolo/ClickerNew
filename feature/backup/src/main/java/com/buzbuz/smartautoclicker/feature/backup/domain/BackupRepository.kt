@@ -115,6 +115,10 @@ internal class BackupRepository private constructor(context: Context) {
                             }
                         }
 
+                        // Convert the legacy whole screen conditions that the imported scenarios could contain into
+                        // in area conditions targeting the full display
+                        localDataRepository.convertLegacyWholeScreenConditions(maxOf(screenSize.x, screenSize.y))
+
                         send(Backup.Completed(actualSuccess.size, totalFailures, compatWarning))
                     }
                 )

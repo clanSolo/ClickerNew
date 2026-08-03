@@ -75,15 +75,6 @@ void Detector::prepareCondition(JNIEnv *env, jlong conditionId, jobject conditio
     preparedConditions[conditionId] = std::move(preparedCondition);
 }
 
-DetectionResult Detector::detectCondition(JNIEnv *env, jlong conditionId, int threshold) {
-    return detectCondition(
-        env,
-        conditionId,
-        cv::Rect(0, 0, fullSizeColorCurrentImage->cols, fullSizeColorCurrentImage->rows),
-        threshold
-    );
-}
-
 DetectionResult Detector::detectCondition(JNIEnv *env, jlong conditionId, int x, int y, int width, int height, int threshold) {
     return detectCondition(env, conditionId, cv::Rect(x, y, width, height), threshold);
 }
@@ -110,7 +101,10 @@ DetectionResult Detector::detectCondition(JNIEnv *env, jlong conditionId, cv::Re
     }
     auto& preparedCondition = preparedConditionIt->second;
 
-    // Get and check the detection area in normal and scaled size
+    // Clamp the detection area to the image bounds, so a detection area bigger than the screen acts as the whole
+    // screen instead of being silently invalid (e.g. previous whole screen conditions converted to a full screen
+    // detection area).
+    fullSizeDetectionRoi &= cv::Rect(0, 0, fullSizeColorCurrentImage->cols, fullSizeColorCurrentImage->rows);
     if (isRoiOutOfBounds(fullSizeDetectionRoi, *fullSizeColorCurrentImage)) {
         __android_log_print(ANDROID_LOG_ERROR, "Detector",
                             "Full size ROI is invalid, %1d/%2d %3d/%4d in %5d/%6d",

@@ -28,11 +28,9 @@ import com.buzbuz.smartautoclicker.core.domain.Repository
 import com.buzbuz.smartautoclicker.core.ui.bindings.dropdown.DropdownItem
 import com.buzbuz.smartautoclicker.core.domain.model.EXACT
 import com.buzbuz.smartautoclicker.core.domain.model.IN_AREA
-import com.buzbuz.smartautoclicker.core.domain.model.WHOLE_SCREEN
 import com.buzbuz.smartautoclicker.core.ui.bindings.dropdown.SelectorState
 import com.buzbuz.smartautoclicker.core.ui.monitoring.MonitoredViewType
 import com.buzbuz.smartautoclicker.core.ui.monitoring.MonitoredViewsManager
-import com.buzbuz.smartautoclicker.core.ui.monitoring.ViewPositioningType
 import com.buzbuz.smartautoclicker.feature.scenario.config.R
 import com.buzbuz.smartautoclicker.feature.scenario.config.domain.EditionRepository
 
@@ -95,22 +93,17 @@ class ConditionViewModel(application: Application) : AndroidViewModel(applicatio
         title = R.string.dropdown_item_title_detection_type_exact,
         icon = R.drawable.ic_detect_exact,
     )
-    val detectionTypeScreen = DropdownItem(
-        title= R.string.dropdown_item_title_detection_type_screen,
-        icon = R.drawable.ic_detect_whole_screen,
-    )
     val detectionTypeInArea = DropdownItem(
         title= R.string.dropdown_item_title_detection_type_in_area,
         icon = R.drawable.ic_detect_in_area,
     )
     /** Detection types choices for the dropdown field. */
-    val detectionTypeItems = listOf(detectionTypeExact, detectionTypeScreen, detectionTypeInArea)
+    val detectionTypeItems = listOf(detectionTypeExact, detectionTypeInArea)
     /** The type of detection currently selected by the user. */
     val detectionType: Flow<DetectionTypeState> = configuredCondition
         .map { condition ->
             when (condition.detectionType) {
                 EXACT -> application.getExactDetectionTypeState(condition.area)
-                WHOLE_SCREEN -> application.getWholeScreenDetectionTypeState()
                 IN_AREA -> application.getInAreaDetectionTypeState(condition.detectionArea ?: condition.area)
                 else -> null
             }
@@ -162,9 +155,6 @@ class ConditionViewModel(application: Application) : AndroidViewModel(applicatio
                 detectionTypeExact -> editionRepository.updateEditedCondition(
                     condition.copy(detectionType = EXACT)
                 )
-                detectionTypeScreen -> editionRepository.updateEditedCondition(
-                    condition.copy(detectionType = WHOLE_SCREEN)
-                )
                 detectionTypeInArea -> editionRepository.updateEditedCondition(
                     condition.copy(
                         detectionType = IN_AREA,
@@ -205,22 +195,9 @@ class ConditionViewModel(application: Application) : AndroidViewModel(applicatio
         monitoredViewsManager.attach(MonitoredViewType.CONDITION_DIALOG_DROPDOWN_DETECTION_TYPE, view)
     }
 
-    fun monitorDropdownItemWholeScreenView(view: View) {
-        monitoredViewsManager.attach(
-            MonitoredViewType.CONDITION_DIALOG_DROPDOWN_ITEM_WHOLE_SCREEN,
-            view,
-            ViewPositioningType.SCREEN,
-        )
-    }
-
-    fun stopDropdownItemWholeScreenViewMonitoring() {
-        monitoredViewsManager.detach(MonitoredViewType.CONDITION_DIALOG_DROPDOWN_ITEM_WHOLE_SCREEN)
-    }
-
     fun stopViewMonitoring() {
         monitoredViewsManager.detach(MonitoredViewType.CONDITION_DIALOG_BUTTON_SAVE)
         monitoredViewsManager.detach(MonitoredViewType.CONDITION_DIALOG_DROPDOWN_DETECTION_TYPE)
-        monitoredViewsManager.detach(MonitoredViewType.CONDITION_DIALOG_DROPDOWN_ITEM_WHOLE_SCREEN)
     }
 
     private fun Context.getExactDetectionTypeState(area: Rect) = DetectionTypeState(
@@ -229,16 +206,6 @@ class ConditionViewModel(application: Application) : AndroidViewModel(applicatio
             isClickable = false,
             title = getString(R.string.item_title_detection_type_exact),
             subText = getString(R.string.item_desc_detection_type_exact, area.left, area.top, area.right, area.bottom),
-            iconRes = null,
-        )
-    )
-
-    private fun Context.getWholeScreenDetectionTypeState() = DetectionTypeState(
-        dropdownItem = detectionTypeScreen,
-        selectorState = SelectorState(
-            isClickable = false,
-            title = getString(R.string.item_title_detection_type_screen),
-            subText = null,
             iconRes = null,
         )
     )

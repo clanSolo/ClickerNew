@@ -17,12 +17,31 @@
 package com.buzbuz.smartautoclicker
 
 import android.app.Application
+
+import com.buzbuz.smartautoclicker.core.domain.Repository
+
 import com.google.android.material.color.DynamicColors
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+
 class SmartAutoClickerApplication : Application() {
+
+    /** Scope for the application wide maintenance tasks, cancelled with the process death. */
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
         DynamicColors.applyToActivitiesIfAvailable(this)
+
+        // Convert the legacy whole screen conditions into in area ones targeting the full display. They can no
+        // longer be created nor selected since the whole screen detection type has been removed.
+        applicationScope.launch {
+            val displayMetrics = resources.displayMetrics
+            Repository.getRepository(this@SmartAutoClickerApplication)
+                .convertLegacyWholeScreenConditions(maxOf(displayMetrics.widthPixels, displayMetrics.heightPixels))
+        }
     }
 }

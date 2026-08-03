@@ -29,7 +29,6 @@ import com.buzbuz.smartautoclicker.core.domain.model.DetectionType
 import com.buzbuz.smartautoclicker.core.domain.model.EXACT
 import com.buzbuz.smartautoclicker.core.domain.model.Identifier
 import com.buzbuz.smartautoclicker.core.domain.model.OR
-import com.buzbuz.smartautoclicker.core.domain.model.WHOLE_SCREEN
 import com.buzbuz.smartautoclicker.core.domain.model.action.Action
 import com.buzbuz.smartautoclicker.core.domain.model.condition.Condition
 import com.buzbuz.smartautoclicker.core.domain.model.endcondition.EndCondition
@@ -133,7 +132,6 @@ class ScenarioProcessorTests {
         val pass = if (isDetected) TEST_DETECTION_OK else TEST_DETECTION_KO
         when (detectionType) {
             EXACT -> mockWhen(mockImageDetector.detectCondition(condition.id.databaseId, area, threshold)).thenReturn(pass)
-            WHOLE_SCREEN -> mockWhen(mockImageDetector.detectCondition(condition.id.databaseId, threshold)).thenReturn(pass)
         }
         return condition
     }
@@ -306,12 +304,12 @@ class ScenarioProcessorTests {
     }
 
     @Test
-    fun oneCondition_wholeScreen_noMatch_shouldBeDetected() = runTest {
+    fun oneCondition_exact_noMatch_shouldBeDetected() = runTest {
         val condition = createTestCondition(
             TEST_CONDITION_PATH_1,
             TEST_CONDITION_AREA_1,
             TEST_CONDITION_THRESHOLD_1,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = true
         )
@@ -328,12 +326,12 @@ class ScenarioProcessorTests {
     }
 
     @Test
-    fun oneCondition_wholeScreen_noMatch_should_Not_BeDetected() = runTest {
+    fun oneCondition_exact_noMatch_should_Not_BeDetected() = runTest {
         val condition = createTestCondition(
             TEST_CONDITION_PATH_1,
             TEST_CONDITION_AREA_1,
             TEST_CONDITION_THRESHOLD_1,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = false
         )
@@ -352,12 +350,12 @@ class ScenarioProcessorTests {
     }
 
     @Test
-    fun oneCondition_wholeScreen_match_shouldBeDetected() = runTest {
+    fun oneCondition_exact_match_shouldBeDetected() = runTest {
         val condition = createTestCondition(
             TEST_CONDITION_PATH_1,
             TEST_CONDITION_AREA_1,
             TEST_CONDITION_THRESHOLD_1,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = true,
             shouldBeOnScreen = true,
         )
@@ -377,12 +375,12 @@ class ScenarioProcessorTests {
     }
 
     @Test
-    fun oneCondition_wholeScreen_match_should_Not_BeDetected() = runTest {
+    fun oneCondition_exact_match_should_Not_BeDetected() = runTest {
         val condition = createTestCondition(
             TEST_CONDITION_PATH_1,
             TEST_CONDITION_AREA_1,
             TEST_CONDITION_THRESHOLD_1,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = true,
             shouldBeOnScreen = false,
         )
@@ -413,7 +411,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = true,
         )
@@ -453,7 +451,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = false,
         )
@@ -492,7 +490,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = false,
         )
@@ -533,7 +531,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = true,
         )
@@ -573,7 +571,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = false,
         )
@@ -614,7 +612,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = true,
             shouldBeOnScreen = true,
         )
@@ -657,7 +655,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = true,
             shouldBeOnScreen = false,
         )
@@ -698,7 +696,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = true,
         )
@@ -738,7 +736,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = false,
         )
@@ -780,7 +778,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = false,
         )
@@ -822,7 +820,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = true,
         )
@@ -864,7 +862,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = false,
         )
@@ -906,7 +904,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = true,
             shouldBeOnScreen = true,
         )
@@ -948,7 +946,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = true,
             shouldBeOnScreen = false,
         )
@@ -994,7 +992,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = true,
         )
@@ -1033,7 +1031,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = false,
             shouldBeOnScreen = true,
         )
@@ -1074,7 +1072,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = true,
             shouldBeOnScreen = true,
         )
@@ -1114,7 +1112,7 @@ class ScenarioProcessorTests {
             TEST_CONDITION_PATH_2,
             TEST_CONDITION_AREA_2,
             TEST_CONDITION_THRESHOLD_2,
-            WHOLE_SCREEN,
+            EXACT,
             isDetected = true,
             shouldBeOnScreen = true,
         )
