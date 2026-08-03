@@ -299,11 +299,16 @@ internal class ScenarioSerializer {
                 ClickPositionType.ON_DETECTED_CONDITION -> {
                     x = null
                     y = null
-                    clickOnConditionId = getLong("clickOnConditionId", true) ?: return null
-                    if (conditions.find { it.id == clickOnConditionId } == null) {
-                        Log.w(TAG, "Can't deserialize action, clickOnConditionId is not valid.")
-                        return null
-                    }
+                    // Never drop the click action: if the referenced condition is missing (e.g. it was deleted,
+                    // which sets the foreign key to null) or no longer belongs to this event, fall back to the
+                    // first condition to be detected, or to the first available one, like the pre-v11 format does.
+                    clickOnConditionId = getLong("clickOnConditionId")
+                        ?.takeIf { clickedId -> conditions.any { condition -> condition.id == clickedId } }
+                        ?: run {
+                            Log.w(TAG, "clickOnConditionId is missing or invalid, falling back to another condition.")
+                            conditions.find { it.shouldBeDetected }?.id
+                                ?: conditions.firstOrNull()?.id
+                        }
                 }
 
                 ClickPositionType.USER_SELECTED -> {

@@ -168,6 +168,7 @@ internal class ScenarioDataSource(
                     completeEventEntity
                         .toEvent(asDomain = true)
                         .copy(scenarioId = Identifier(databaseId = scenarioDbId))
+                        .sanitizeClickOnConditionReferences()
                 }.sortedBy { it.priority }
 
                 /* Same with the end conditions. */
@@ -403,6 +404,41 @@ internal class ScenarioDataSource(
 
         Log.d(TAG, "Removed conditions count: ${removedPath.size}; Unused bitmaps after removal: ${deletedPaths.size}")
         bitmapManager.deleteBitmaps(deletedPaths)
+    }
+
+    /**
+     * Ensure that every click on a detected condition references a condition of the event.
+     * Backups or database content can contain dangling references: deleting a condition sets the
+     * clickOnConditionId foreign key to null, and the backup compat deserializer can fall back to a
+     * condition identifier. When a reference is missing or points to a condition of another event, the
+     * click is attached to the first condition to be detected, or to the first available one, so the
+     * scenario stays valid and the action is neither rejected nor lost.
+     */
+    private fun Event.sanitizeClickOnConditionReferences(): Event {
+        if (actions.none { it is Action.Click && it.positionType == Action.Click.PositionType.ON_DETECTED_CONDITION }) {
+            return this
+        }
+
+        return copy(
+            actions = actions.map { action ->
+                if (action !is Action.Click || action.positionType != Action.Click.PositionType.ON_DETECTED_CONDITION) {
+                    action
+                } else {
+                    val referenceIsValid = action.clickOnConditionId?.let { clickOnConditionId ->
+                        conditions.any { condition -> condition.id == clickOnConditionId }
+                    } ?: false
+
+                    if (referenceIsValid) {
+                        action
+                    } else {
+                        val fallbackCondition = conditions.find { it.shouldBeDetected }
+                            ?: conditions.firstOrNull()
+                        Log.w(TAG, "Click on condition of action ${action.id} has no valid reference, using condition ${fallbackCondition?.id} instead.")
+                        action.copy(clickOnConditionId = fallbackCondition?.id)
+                    }
+                }
+            }
+        )
     }
 
     private suspend fun saveBitmapIfNeeded(condition: Condition): String =

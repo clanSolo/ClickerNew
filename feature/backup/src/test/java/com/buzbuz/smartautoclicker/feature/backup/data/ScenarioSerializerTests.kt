@@ -929,7 +929,11 @@ class ScenarioSerializerTests {
         ))
 
         ScenarioSerializer().apply {
-            assertNull(jsonV10ClickOnCondition.deserializeClickActionCompat(emptyList()))
+            val click = jsonV10ClickOnCondition.deserializeClickActionCompat(emptyList())
+
+            // The action is never dropped; without any condition available, the reference stays empty
+            assertNotNull(click)
+            assertNull(click?.clickOnConditionId)
         }
     }
 
@@ -954,9 +958,22 @@ class ScenarioSerializerTests {
             threshold = 5, detectionType = 1,
             shouldBeDetected = false,
         )
+        val detectedCondition = ConditionEntity(
+            id = 7, eventId = 1, name = "Condition", path = "/toto/tutu",
+            areaLeft = 1, areaTop = 2, areaRight = 3, areaBottom = 4,
+            threshold = 5, detectionType = 1,
+            shouldBeDetected = true,
+        )
 
         ScenarioSerializer().apply {
-            assertNull(jsonV10ClickOnCondition.deserializeClickActionCompat(listOf(invalidCondition)))
+            // The referenced condition id is unknown: the action falls back to the detected condition
+            val click = jsonV10ClickOnCondition.deserializeClickActionCompat(
+                listOf(invalidCondition, detectedCondition)
+            )
+
+            assertNotNull(click)
+            assertEquals(ClickPositionType.ON_DETECTED_CONDITION, click?.clickPositionType)
+            assertEquals(detectedCondition.id, click?.clickOnConditionId)
         }
     }
 
