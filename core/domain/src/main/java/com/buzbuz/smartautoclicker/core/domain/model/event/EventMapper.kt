@@ -31,6 +31,7 @@ internal fun Event.toEntity() = EventEntity(
     priority = priority,
     enabledOnStart = enabledOnStart,
     takeCaptures = takeCaptures,
+    soundAlarm = soundAlarm,
 )
 
 /** @return the complete event for this entity. */
@@ -42,6 +43,7 @@ internal fun CompleteEventEntity.toEvent(asDomain: Boolean = false) = Event(
     priority = event.priority,
     enabledOnStart = event.enabledOnStart,
     takeCaptures = event.takeCaptures,
+    soundAlarm = event.soundAlarm,
     actions = actions.sortedBy { it.action.priority }.map { it.toAction(asDomain) }.toMutableList(),
     conditions = conditions.map { it.toCondition(asDomain) }.toMutableList(),
 )

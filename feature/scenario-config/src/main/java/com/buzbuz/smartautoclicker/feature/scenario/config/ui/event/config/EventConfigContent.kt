@@ -67,6 +67,7 @@ class EventConfigContent(appContext: Context) : NavBarDialogContent(appContext) 
             )
 
             takeCapturesSwitch.setOnCheckedChangeListener { _, isChecked -> viewModel.setTakeCaptures(isChecked) }
+            soundAlarmSwitch.setOnCheckedChangeListener { _, isChecked -> viewModel.setSoundAlarm(isChecked) }
         }
 
         return viewBinding.root
@@ -82,6 +83,7 @@ class EventConfigContent(appContext: Context) : NavBarDialogContent(appContext) 
                 launch { viewModel.conditionOperator.collect(::updateConditionOperator) }
                 launch { viewModel.eventStateItem.collect(::updateEventState) }
                 launch { viewModel.takeCaptures.collect(::updateTakeCaptures) }
+                launch { viewModel.soundAlarm.collect(::updateSoundAlarm) }
             }
         }
     }
@@ -127,6 +129,13 @@ class EventConfigContent(appContext: Context) : NavBarDialogContent(appContext) 
         // Guard against listener loops: only update the switch when its state actually differs
         if (viewBinding.takeCapturesSwitch.isChecked != enabled) {
             viewBinding.takeCapturesSwitch.isChecked = enabled
+        }
+    }
+
+    private fun updateSoundAlarm(enabled: Boolean) {
+        // Guard against listener loops: only update the switch when its state actually differs
+        if (viewBinding.soundAlarmSwitch.isChecked != enabled) {
+            viewBinding.soundAlarmSwitch.isChecked = enabled
         }
     }
 }

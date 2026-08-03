@@ -45,6 +45,8 @@ data class Event(
     val enabledOnStart: Boolean = true,
     /** If true, a screenshot of the triggering screen frame is saved each time this event is triggered. */
     val takeCaptures: Boolean = false,
+    /** If true, an alarm beeps in loop while this event's conditions match. */
+    val soundAlarm: Boolean = false,
 ) {
 
     /** Tells if this event is complete and valid for save. */

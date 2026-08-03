@@ -102,6 +102,10 @@ class EventConfigViewModel(application: Application) : AndroidViewModel(applicat
     val takeCaptures: Flow<Boolean> = configuredEvent
         .map { it.takeCaptures }
 
+    /** Tells if the configured event rings the alarm while its conditions match. */
+    val soundAlarm: Flow<Boolean> = configuredEvent
+        .map { it.soundAlarm }
+
     /** Tells if the event name is valid or not. */
     val eventNameError: Flow<Boolean> = configuredEvent
         .map { it.name.isEmpty() }
@@ -150,6 +154,15 @@ class EventConfigViewModel(application: Application) : AndroidViewModel(applicat
         editionRepository.editionState.getEditedEvent()?.let { event ->
             viewModelScope.launch {
                 editionRepository.updateEditedEvent(event.copy(takeCaptures = enabled))
+            }
+        }
+    }
+
+    /** Enable or disable the detection alarm for the configured event. */
+    fun setSoundAlarm(enabled: Boolean) {
+        editionRepository.editionState.getEditedEvent()?.let { event ->
+            viewModelScope.launch {
+                editionRepository.updateEditedEvent(event.copy(soundAlarm = enabled))
             }
         }
     }

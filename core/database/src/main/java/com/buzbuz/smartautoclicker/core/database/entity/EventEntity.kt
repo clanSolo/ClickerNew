@@ -67,6 +67,7 @@ data class EventEntity(
     @ColumnInfo(name = "priority") var priority: Int,
     @ColumnInfo(name = "enabled_on_start", defaultValue="1") var enabledOnStart: Boolean = true,
     @ColumnInfo(name = "take_captures", defaultValue="0") var takeCaptures: Boolean = false,
+    @ColumnInfo(name = "sound_alarm", defaultValue="0") var soundAlarm: Boolean = false,
 )
 
 /**

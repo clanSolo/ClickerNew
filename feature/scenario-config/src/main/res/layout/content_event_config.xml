@@ -64,6 +64,20 @@
             android:layout_height="wrap_content"
             android:text="@string/item_desc_take_captures"/>
 
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sound_alarm_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_vertical_default"
+            android:text="@string/item_title_sound_alarm"/>
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/sound_alarm_description"
+            style="@style/AppTheme.TextAppearance.ListItemSubText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/item_desc_sound_alarm"/>
+
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>

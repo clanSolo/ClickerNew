@@ -92,6 +92,8 @@ internal class DetectorEngine(context: Context) {
 
     /** Saves the captures of the screen frames triggering the events with take captures enabled. */
     private var eventCaptureSaver: ScreenCaptureSaver? = null
+    /** Plays the beep alarm while the events with alarm enabled are detected. */
+    private var eventAlarmPlayer: EventAlarmPlayer? = null
 
     /**
      * Start the screen detection.
@@ -176,6 +178,10 @@ internal class DetectorEngine(context: Context) {
             captureSaver.start(context)
             eventCaptureSaver = captureSaver
 
+            val alarmPlayer = EventAlarmPlayer()
+            alarmPlayer.start()
+            eventAlarmPlayer = alarmPlayer
+
             detectionProgressListener = progressListener
             progressListener?.onSessionStarted(context, scenario, events)
 
@@ -191,6 +197,7 @@ internal class DetectorEngine(context: Context) {
                 onStopRequested = { stopDetection() },
                 progressListener  = progressListener,
                 captureRecorder = captureSaver::saveTriggerCapture,
+                alarmTrigger = alarmPlayer::onEventTriggered,
             )
 
             detectionFrameInterval = scenario.detectionFrameInterval
@@ -249,6 +256,8 @@ internal class DetectorEngine(context: Context) {
             scenarioProcessor = null
             eventCaptureSaver?.stop()
             eventCaptureSaver = null
+            eventAlarmPlayer?.stop()
+            eventAlarmPlayer = null
             detectionFrameInterval = 0
             detectionProgressListener?.onSessionEnded()
             detectionProgressListener = null

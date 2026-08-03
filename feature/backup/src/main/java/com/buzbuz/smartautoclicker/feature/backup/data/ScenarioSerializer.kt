@@ -201,6 +201,7 @@ internal class ScenarioSerializer {
             priority = getInt("priority")?.coerceAtLeast(0) ?: 0,
             enabledOnStart = getBoolean("enabledOnStart") ?: true,
             takeCaptures = getBoolean("takeCaptures") ?: false,
+            soundAlarm = getBoolean("soundAlarm") ?: false,
         )
     }
 

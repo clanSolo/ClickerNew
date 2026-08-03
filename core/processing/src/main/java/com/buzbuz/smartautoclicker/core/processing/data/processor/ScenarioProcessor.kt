@@ -53,6 +53,7 @@ import kotlinx.coroutines.yield
  * @param progressListener the object to notify for detection progress. Can be null if not required.
  * @param captureRecorder called with the current frame when an event with take captures enabled is triggered,
  *                        allowing to save a capture of the screen that matched its conditions.
+ * @param alarmTrigger called when an event with alarm enabled is triggered, to ring the alarm while it matches.
  */
 internal class ScenarioProcessor(
     private val imageDetector: ImageDetector,
@@ -66,6 +67,7 @@ internal class ScenarioProcessor(
     private val onStopRequested: () -> Unit,
     private val progressListener: ProgressListener? = null,
     private val captureRecorder: (Event, ScreenFrame) -> Unit = { _, _ -> },
+    private val alarmTrigger: (Event) -> Unit = {},
 ) {
 
     /** Handle the processing state of the scenario. */
@@ -125,6 +127,8 @@ internal class ScenarioProcessor(
             if (conditionAreFulfilled) {
                 // Save a capture of the triggering screen frame, if requested by the event configuration
                 if (event.takeCaptures) captureRecorder(event, screenFrame)
+                // Ring the alarm while this event matches, if requested by the event configuration
+                if (event.soundAlarm) alarmTrigger(event)
 
                 event.actions.let { actions ->
                     actionExecutor.executeActions(event, actions, processingResults)

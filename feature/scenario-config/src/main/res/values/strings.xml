@@ -192,6 +192,8 @@
     <string name="input_field_error_required">Required</string>
     <string name="item_title_take_captures">Take captures</string>
     <string name="item_desc_take_captures">Save a screenshot in the app Captures folder every time this event is triggered</string>
+    <string name="item_title_sound_alarm">Sound alarm</string>
+    <string name="item_desc_sound_alarm">Ring a beeping alarm while this event matches, silenced once it stops being detected</string>
     <string name="input_field_toggle_event_type">New event state</string>
 
     <!--
