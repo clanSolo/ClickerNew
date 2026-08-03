@@ -35,6 +35,9 @@ import android.util.Log
 
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
+
+import java.nio.ByteBuffer
+
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -293,23 +296,46 @@ class DisplayRecorder internal constructor() {
  *
  * @param resultBitmap a bitmap to use as a cache in order to avoid instantiating an new one. If null, a new one is
  *                     created.
- * @return the bitmap corresponding to the image. If [resultBitmap] was provided, it will be the same object.
+ * @return the bitmap corresponding to the image, with the exact size of the screen. If [resultBitmap] was provided,
+ *         it will be the same object.
  */
 private fun Image.toBitmap(resultBitmap: Bitmap? = null): Bitmap {
-    var bitmap = resultBitmap
-    val imageWidth = width + (planes[0].rowStride - planes[0].pixelStride * width) / planes[0].pixelStride
+    val plane = planes[0]
 
+    var bitmap = resultBitmap
     if (bitmap == null) {
-        bitmap = Bitmap.createBitmap(imageWidth, height, Bitmap.Config.ARGB_8888)
-    } else if (bitmap.width != imageWidth || bitmap.height != height) {
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    } else if (bitmap.width != width || bitmap.height != height) {
         try {
-            bitmap.reconfigure(imageWidth, height, Bitmap.Config.ARGB_8888)
+            bitmap.reconfigure(width, height, Bitmap.Config.ARGB_8888)
         } catch (ex: IllegalArgumentException) {
-            bitmap = Bitmap.createBitmap(imageWidth, height, Bitmap.Config.ARGB_8888)
+            bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         }
     }
 
-    bitmap.copyPixelsFromBuffer(planes[0].buffer)
+    if (plane.rowStride == plane.pixelStride * width) {
+        bitmap.copyPixelsFromBuffer(plane.buffer)
+    } else {
+        // Some devices align the buffer rows on bigger memory boundaries, adding a padding at the end of each row
+        // (rowStride > pixelStride * width). Copy the buffer row by row to skip that padding, otherwise the extra
+        // columns would appear as a garbage band at the right edge of the bitmap and of any crop saved from it.
+        val rowContentSize = plane.pixelStride * width
+        val bitmapBuffer = ByteBuffer.allocateDirect(rowContentSize * height)
+        val buffer = plane.buffer.duplicate()
+        val pixelRow = ByteArray(rowContentSize)
+
+        var rowStart = 0
+        repeat(height) {
+            buffer.position(rowStart)
+            buffer.get(pixelRow)
+            bitmapBuffer.put(pixelRow)
+            rowStart += plane.rowStride
+        }
+
+        bitmapBuffer.rewind()
+        bitmap.copyPixelsFromBuffer(bitmapBuffer)
+    }
+
     return bitmap
 }
 /** The number of bytes per pixel of the RGBA_8888 format, the only pixel stride usable directly by the detection. */
