@@ -54,16 +54,15 @@ android {
                     cppFlags "-Wl,--build-id"
                     arguments "-DANDROID_SDK_ROOT=${project.android.sdkDirectory}",
                             "-DCMAKE_BUILD_TYPE=Release",
+                            "-DANDROID_ARM_NEON=ON",
                             "-DOPENCV_ENABLE_NONFREE=OFF",
                             "-DBUILD_opencv_ittnotify=OFF",
                             "-DBUILD_ITT=OFF",
-                            "-DCV_DISABLE_OPTIMIZATION=ON",
                             "-DWITH_CUDA=OFF",
                             "-DWITH_OPENCL=OFF",
                             "-DWITH_OPENCLAMDFFT=OFF",
                             "-DWITH_OPENCLAMDBLAS=OFF",
                             "-DWITH_VA_INTEL=OFF",
-                            "-DCPU_BASELINE_DISABLE=ON",
                             "-DENABLE_SSE=OFF",
                             "-DENABLE_SSE2=OFF",
                             "-DBUILD_TESTING=OFF",
@@ -96,7 +95,7 @@ android {
                             "-DBUILD_JAVA=OFF",
                             "-DBUILD_ANDROID_EXAMPLES=OFF",
                             "-DBUILD_ANDROID_PROJECTS=OFF",
-                            "-DBUILD_SHARED_LIBS=ON"
+                            "-DBUILD_SHARED_LIBS=OFF"
                 }
             }
 
