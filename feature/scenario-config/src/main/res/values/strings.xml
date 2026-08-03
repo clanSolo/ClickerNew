@@ -190,6 +190,8 @@
     <string name="input_field_label_anti_detection">Anti-detection</string>
     <string name="input_field_label_event_state">State</string>
     <string name="input_field_error_required">Required</string>
+    <string name="item_title_take_captures">Take captures</string>
+    <string name="item_desc_take_captures">Save a screenshot in the app Captures folder every time this event is triggered</string>
     <string name="input_field_toggle_event_type">New event state</string>
 
     <!--

@@ -98,6 +98,10 @@ class EventConfigViewModel(application: Application) : AndroidViewModel(applicat
         .map { it.name }
         .take(1)
 
+    /** Tells if the configured event saves a screen capture each time it is triggered. */
+    val takeCaptures: Flow<Boolean> = configuredEvent
+        .map { it.takeCaptures }
+
     /** Tells if the event name is valid or not. */
     val eventNameError: Flow<Boolean> = configuredEvent
         .map { it.name.isEmpty() }
@@ -137,6 +141,15 @@ class EventConfigViewModel(application: Application) : AndroidViewModel(applicat
 
             viewModelScope.launch {
                 editionRepository.updateEditedEvent(conf.copy(enabledOnStart = value))
+            }
+        }
+    }
+
+    /** Enable or disable the screen captures for the configured event. */
+    fun setTakeCaptures(enabled: Boolean) {
+        editionRepository.editionState.getEditedEvent()?.let { event ->
+            viewModelScope.launch {
+                editionRepository.updateEditedEvent(event.copy(takeCaptures = enabled))
             }
         }
     }

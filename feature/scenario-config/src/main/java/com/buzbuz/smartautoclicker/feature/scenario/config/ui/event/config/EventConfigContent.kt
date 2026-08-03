@@ -65,6 +65,8 @@ class EventConfigContent(appContext: Context) : NavBarDialogContent(appContext) 
                 onItemSelected = viewModel::setConditionOperator,
                 onItemBound = ::onConditionOperatorDropdownItemBound,
             )
+
+            takeCapturesSwitch.setOnCheckedChangeListener { _, isChecked -> viewModel.setTakeCaptures(isChecked) }
         }
 
         return viewBinding.root
@@ -79,6 +81,7 @@ class EventConfigContent(appContext: Context) : NavBarDialogContent(appContext) 
                 launch { viewModel.eventName.collect(::updateEventName) }
                 launch { viewModel.conditionOperator.collect(::updateConditionOperator) }
                 launch { viewModel.eventStateItem.collect(::updateEventState) }
+                launch { viewModel.takeCaptures.collect(::updateTakeCaptures) }
             }
         }
     }
@@ -118,5 +121,12 @@ class EventConfigContent(appContext: Context) : NavBarDialogContent(appContext) 
 
     private fun updateEventState(stateItem: DropdownItem) {
         viewBinding.enabledOnStartField.setSelectedItem(stateItem)
+    }
+
+    private fun updateTakeCaptures(enabled: Boolean) {
+        // Guard against listener loops: only update the switch when its state actually differs
+        if (viewBinding.takeCapturesSwitch.isChecked != enabled) {
+            viewBinding.takeCapturesSwitch.isChecked = enabled
+        }
     }
 }

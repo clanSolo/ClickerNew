@@ -51,6 +51,8 @@ import kotlinx.coroutines.yield
  * @param endConditions the list of end conditions for the current scenario.
  * @param onStopRequested called when a end condition of the scenario have been reached or all events are disabled.
  * @param progressListener the object to notify for detection progress. Can be null if not required.
+ * @param captureRecorder called with the current frame when an event with take captures enabled is triggered,
+ *                        allowing to save a capture of the screen that matched its conditions.
  */
 internal class ScenarioProcessor(
     private val imageDetector: ImageDetector,
@@ -63,6 +65,7 @@ internal class ScenarioProcessor(
     endConditions: List<EndCondition>,
     private val onStopRequested: () -> Unit,
     private val progressListener: ProgressListener? = null,
+    private val captureRecorder: (Event, ScreenFrame) -> Unit = { _, _ -> },
 ) {
 
     /** Handle the processing state of the scenario. */
@@ -120,6 +123,9 @@ internal class ScenarioProcessor(
 
             // If conditions are fulfilled, execute this event's actions !
             if (conditionAreFulfilled) {
+                // Save a capture of the triggering screen frame, if requested by the event configuration
+                if (event.takeCaptures) captureRecorder(event, screenFrame)
+
                 event.actions.let { actions ->
                     actionExecutor.executeActions(event, actions, processingResults)
                 }

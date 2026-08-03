@@ -90,6 +90,9 @@ internal class DetectorEngine(context: Context) {
      */
     private var detectionProgressListener: ProgressListener? = null
 
+    /** Saves the captures of the screen frames triggering the events with take captures enabled. */
+    private var eventCaptureSaver: ScreenCaptureSaver? = null
+
     /**
      * Start the screen detection.
      *
@@ -169,6 +172,10 @@ internal class DetectorEngine(context: Context) {
             val detector = NativeDetector()
             imageDetector = detector
 
+            val captureSaver = ScreenCaptureSaver()
+            captureSaver.start(context)
+            eventCaptureSaver = captureSaver
+
             detectionProgressListener = progressListener
             progressListener?.onSessionStarted(context, scenario, events)
 
@@ -183,6 +190,7 @@ internal class DetectorEngine(context: Context) {
                 endConditions =  endConditions,
                 onStopRequested = { stopDetection() },
                 progressListener  = progressListener,
+                captureRecorder = captureSaver::saveTriggerCapture,
             )
 
             detectionFrameInterval = scenario.detectionFrameInterval
@@ -239,6 +247,8 @@ internal class DetectorEngine(context: Context) {
             imageDetector?.close()
             imageDetector = null
             scenarioProcessor = null
+            eventCaptureSaver?.stop()
+            eventCaptureSaver = null
             detectionFrameInterval = 0
             detectionProgressListener?.onSessionEnded()
             detectionProgressListener = null

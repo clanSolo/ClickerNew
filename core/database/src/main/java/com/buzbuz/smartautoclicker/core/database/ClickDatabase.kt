@@ -61,6 +61,7 @@ import com.buzbuz.smartautoclicker.core.database.migrations.*
         AutoMigration (from = 8, to = 9, spec = AutoMigration8to9::class),
         AutoMigration (from = 11, to = 12),
         AutoMigration (from = 12, to = 13),
+        AutoMigration (from = 13, to = 14),
     ]
 )
 @TypeConverters(
@@ -111,4 +112,4 @@ abstract class ClickDatabase : ScenarioDatabase() {
 }
 
 /** Current version of the database. */
-const val CLICK_DATABASE_VERSION = 13
+const val CLICK_DATABASE_VERSION = 14

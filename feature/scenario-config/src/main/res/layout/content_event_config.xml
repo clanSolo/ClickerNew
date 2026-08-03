@@ -50,6 +50,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/take_captures_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_vertical_default"
+            android:text="@string/item_title_take_captures"/>
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/take_captures_description"
+            style="@style/AppTheme.TextAppearance.ListItemSubText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/item_desc_take_captures"/>
+
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>

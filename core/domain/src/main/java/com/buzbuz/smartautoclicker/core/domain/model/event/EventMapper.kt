@@ -30,6 +30,7 @@ internal fun Event.toEntity() = EventEntity(
     conditionOperator = conditionOperator,
     priority = priority,
     enabledOnStart = enabledOnStart,
+    takeCaptures = takeCaptures,
 )
 
 /** @return the complete event for this entity. */
@@ -40,6 +41,7 @@ internal fun CompleteEventEntity.toEvent(asDomain: Boolean = false) = Event(
     conditionOperator = event.conditionOperator,
     priority = event.priority,
     enabledOnStart = event.enabledOnStart,
+    takeCaptures = event.takeCaptures,
     actions = actions.sortedBy { it.action.priority }.map { it.toAction(asDomain) }.toMutableList(),
     conditions = conditions.map { it.toCondition(asDomain) }.toMutableList(),
 )

@@ -43,6 +43,8 @@ data class Event(
     val actions: List<Action> = emptyList(),
     val conditions: List<Condition> =  emptyList(),
     val enabledOnStart: Boolean = true,
+    /** If true, a screenshot of the triggering screen frame is saved each time this event is triggered. */
+    val takeCaptures: Boolean = false,
 ) {
 
     /** Tells if this event is complete and valid for save. */
