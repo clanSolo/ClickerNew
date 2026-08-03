@@ -26,8 +26,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 
 import com.buzbuz.smartautoclicker.core.domain.Repository
-import com.buzbuz.smartautoclicker.feature.billing.IBillingRepository
-import com.buzbuz.smartautoclicker.feature.billing.ProModeAdvantage
 import com.buzbuz.smartautoclicker.core.domain.model.condition.Condition
 import com.buzbuz.smartautoclicker.feature.scenario.config.domain.EditionRepository
 import com.buzbuz.smartautoclicker.core.ui.monitoring.MonitoredViewsManager
@@ -43,20 +41,12 @@ class ConditionsViewModel(application: Application) : AndroidViewModel(applicati
     private val repository = Repository.getRepository(application.applicationContext)
     /** Maintains the currently configured scenario state. */
     private val editionRepository = EditionRepository.getInstance(application)
-    /** The repository for the pro mode billing. */
-    private val billingRepository = IBillingRepository.getRepository(application)
     /** Monitors views. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
     /** Currently configured event. */
     val configuredEventConditions = editionRepository.editionState.editedEventConditionsState
         .mapNotNull { it.value }
-
-    /** Tells if the limitation in conditions count have been reached. */
-    val isConditionLimitReached: Flow<Boolean> = billingRepository.isProModePurchased
-        .combine(configuredEventConditions) { isProModePurchased, conditions ->
-            !isProModePurchased && (conditions.size  >= ProModeAdvantage.Limitation.CONDITION_COUNT_LIMIT.limit)
-        }
 
     /** Tells if there is at least one condition to copy. */
     val canCopyCondition: Flow<Boolean> = combine(
@@ -73,9 +63,6 @@ class ConditionsViewModel(application: Application) : AndroidViewModel(applicati
         }
         false
     }
-
-    /** Tells if the pro mode billing flow is being displayed. */
-    val isBillingFlowDisplayed: Flow<Boolean> = billingRepository.isBillingFlowInProcess
 
     /**
      * Create a new condition with the default values from configuration.
@@ -134,10 +121,6 @@ class ConditionsViewModel(application: Application) : AndroidViewModel(applicati
 
         onBitmapLoaded.invoke(null)
         return null
-    }
-
-    fun onConditionCountReachedAddCopyClicked(context: Context) {
-        billingRepository.startBillingActivity(context, ProModeAdvantage.Limitation.CONDITION_COUNT_LIMIT)
     }
 
     fun monitorCreateConditionView(view: View) {

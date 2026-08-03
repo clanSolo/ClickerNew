@@ -1,5 +1,4 @@
 <p align="center">
-  <img src="https://github.com/Nain57/SmartAutoClicker/blob/master/smartautoclicker/src/main/ic_smart_auto_clicker-playstore.png?raw=true" height="64">
   <h3 align="center">Smart AutoClicker</h3>
   <p align="center">An open-source auto clicker on images for Android<p>
 </p>

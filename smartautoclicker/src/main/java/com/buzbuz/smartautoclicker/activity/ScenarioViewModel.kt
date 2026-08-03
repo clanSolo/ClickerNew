@@ -35,9 +35,6 @@ import com.buzbuz.smartautoclicker.activity.ScenarioListFragmentUiState.EventIte
 import com.buzbuz.smartautoclicker.activity.ScenarioListFragmentUiState.Menu
 import com.buzbuz.smartautoclicker.activity.ScenarioListFragmentUiState.ScenarioListItem
 import com.buzbuz.smartautoclicker.activity.ScenarioListFragmentUiState.Type
-import com.buzbuz.smartautoclicker.feature.billing.domain.BillingRepository
-import com.buzbuz.smartautoclicker.feature.billing.IBillingRepository
-import com.buzbuz.smartautoclicker.feature.billing.ProModeAdvantage
 import com.buzbuz.smartautoclicker.core.domain.model.condition.Condition
 import com.buzbuz.smartautoclicker.core.domain.Repository
 import com.buzbuz.smartautoclicker.core.domain.model.DATABASE_ID_INSERTION
@@ -61,8 +58,6 @@ class ScenarioViewModel(application: Application) : AndroidViewModel(application
 
     /** The repository providing access to the database. */
     private val repository = Repository.getRepository(application)
-    /** The repository for the pro mode billing. */
-    private val billingRepository: BillingRepository = IBillingRepository.getRepository(application.applicationContext)
 
     /** Callback upon the availability of the [SmartAutoClickerService]. */
     private val serviceConnection: (SmartAutoClickerService.LocalService?) -> Unit = { localService ->
@@ -92,19 +87,11 @@ class ScenarioViewModel(application: Application) : AndroidViewModel(application
     /** Set of scenario identifier selected for a backup. */
     private val selectedForBackup = MutableStateFlow(emptySet<Long>())
 
-    /** Tells if the limitation in scenario count have been reached. */
-    private val isScenarioLimitReached: Flow<Boolean> = billingRepository.isProModePurchased
-        .combine(repository.scenarios) { isProModePurchased, scenarios ->
-            !isProModePurchased && scenarios.size >= ProModeAdvantage.Limitation.SCENARIO_COUNT_LIMIT.limit
-        }
-
     val uiState: StateFlow<ScenarioListFragmentUiState?> = combine(
         uiStateType,
         filteredScenarios,
         selectedForBackup,
-        isScenarioLimitReached,
-        billingRepository.isProModePurchased,
-    ) { stateType, scenarios, backupSelection, isLimitReached, isProMode ->
+    ) { stateType, scenarios, backupSelection ->
 
         val scenarioList = createScenarioItemList(
             uiState = stateType,
@@ -116,15 +103,12 @@ class ScenarioViewModel(application: Application) : AndroidViewModel(application
             uiState = stateType,
             scenarioItems = scenarioList,
             backupSelection = backupSelection,
-            isProModePurchased = isProMode,
         )
 
         ScenarioListFragmentUiState(
             type = stateType,
             menuUiState = menuUiState,
             listContent = scenarioList,
-            isScenarioLimitReached = isLimitReached,
-            isProModePurchased = isProMode,
         )
     }.stateIn(
         viewModelScope,
@@ -165,7 +149,6 @@ class ScenarioViewModel(application: Application) : AndroidViewModel(application
         uiState: Type,
         scenarioItems: List<ScenarioListItem>,
         backupSelection: Set<Long>,
-        isProModePurchased: Boolean,
     ): Menu = when (uiState) {
         Type.SEARCH -> Menu(
             searchItemState = Menu.Item(false),
@@ -194,15 +177,10 @@ class ScenarioViewModel(application: Application) : AndroidViewModel(application
                 searchItemState = Menu.Item(scenarioItems.isNotEmpty()),
                 selectAllItemState = Menu.Item(false),
                 cancelItemState = Menu.Item(false),
-                importItemState = Menu.Item(
-                    visible = true,
-                    enabled = true,
-                    iconAlpha = if (isProModePurchased) ALPHA_ENABLED_ITEM_INT else ALPHA_DISABLED_ITEM_INT,
-                ),
+                importItemState = Menu.Item(visible = true),
                 exportItemState = Menu.Item(
                     visible = haveScenarioToCopy,
                     enabled = haveScenarioToCopy,
-                    iconAlpha = if (isProModePurchased) ALPHA_ENABLED_ITEM_INT else ALPHA_DISABLED_ITEM_INT,
                 ),
             )
         }
@@ -387,18 +365,6 @@ class ScenarioViewModel(application: Application) : AndroidViewModel(application
         onBitmapLoaded.invoke(null)
         return null
     }
-
-    fun onScenarioCountReachedAddCopyClicked(context: Context) {
-        billingRepository.startBillingActivity(context, ProModeAdvantage.Limitation.SCENARIO_COUNT_LIMIT)
-    }
-
-    fun onExportClickedWithoutProMode(context: Context) {
-        billingRepository.startBillingActivity(context, ProModeAdvantage.Feature.BACKUP_EXPORT)
-    }
-
-    fun onImportClickedWithoutProMode(context: Context) {
-        billingRepository.startBillingActivity(context, ProModeAdvantage.Feature.BACKUP_IMPORT)
-    }
 }
 
 /**
@@ -407,15 +373,11 @@ class ScenarioViewModel(application: Application) : AndroidViewModel(application
  * @param type the current ui type
  * @param menuUiState the ui state for the action bar menu
  * @param listContent the content of the scenario list
- * @param isScenarioLimitReached tells if the user don't have pro mode and have reached the scenario creation count
- * @param isProModePurchased tells if the user have bought pro mode
  */
 data class ScenarioListFragmentUiState(
     val type: Type,
     val menuUiState: Menu,
     val listContent: List<ScenarioListItem>,
-    val isScenarioLimitReached: Boolean,
-    val isProModePurchased: Boolean,
 ) {
 
     /** Possible states for the action menu of the ScenarioListFragment. */

@@ -17,16 +17,12 @@
 package com.buzbuz.smartautoclicker.feature.scenario.config.ui.event.config
 
 import android.app.Application
-import android.content.Context
 import android.view.View
 
-import androidx.annotation.DrawableRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 
 import com.buzbuz.smartautoclicker.core.ui.bindings.dropdown.DropdownItem
-import com.buzbuz.smartautoclicker.feature.billing.IBillingRepository
-import com.buzbuz.smartautoclicker.feature.billing.ProModeAdvantage
 import com.buzbuz.smartautoclicker.feature.scenario.config.domain.EditionRepository
 import com.buzbuz.smartautoclicker.core.domain.model.AND
 import com.buzbuz.smartautoclicker.core.domain.model.OR
@@ -46,8 +42,6 @@ class EventConfigViewModel(application: Application) : AndroidViewModel(applicat
 
     /** Maintains the currently configured scenario state. */
     private val editionRepository = EditionRepository.getInstance(application)
-    /** The repository for the pro mode billing. */
-    private val billingRepository = IBillingRepository.getRepository(application)
     /** Monitors views. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
@@ -63,14 +57,9 @@ class EventConfigViewModel(application: Application) : AndroidViewModel(applicat
         title= R.string.dropdown_item_title_event_state_disabled,
         helperText = R.string.dropdown_helper_text_event_state_disabled,
     )
-    val eventStateDropdownState: Flow<EventStateDropdownUiState> = billingRepository.isProModePurchased
-        .map { isProModePurchased ->
-            EventStateDropdownUiState(
-                items = listOf(enableEventItem, disableEventItem),
-                enabled = isProModePurchased,
-                disabledIcon = R.drawable.ic_pro_small,
-            )
-        }
+    val eventStateDropdownState: EventStateDropdownUiState = EventStateDropdownUiState(
+        items = listOf(enableEventItem, disableEventItem),
+    )
 
     /** The enabled on start state of the configured event. */
     val eventStateItem: Flow<DropdownItem> = configuredEvent
@@ -113,9 +102,6 @@ class EventConfigViewModel(application: Application) : AndroidViewModel(applicat
     val eventNameError: Flow<Boolean> = configuredEvent
         .map { it.name.isEmpty() }
 
-    /** Tells if the pro mode billing flow is being displayed. */
-    val isBillingFlowDisplayed: Flow<Boolean> = billingRepository.isBillingFlowInProcess
-
     /** Set a new name for the configured event. */
     fun setEventName(newName: String) {
         editionRepository.editionState.getEditedEvent()?.let { event ->
@@ -155,10 +141,6 @@ class EventConfigViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    fun onEventStateClickedWithoutProMode(context: Context) {
-        billingRepository.startBillingActivity(context, ProModeAdvantage.Feature.EVENT_STATE)
-    }
-
     fun monitorConditionOperatorView(view: View) {
         monitoredViewsManager.attach(MonitoredViewType.EVENT_DIALOG_DROPDOWN_CONDITION_OPERATOR, view)
     }
@@ -185,6 +167,4 @@ class EventConfigViewModel(application: Application) : AndroidViewModel(applicat
 
 data class EventStateDropdownUiState(
     val items: List<DropdownItem>,
-    val enabled: Boolean = true,
-    @DrawableRes val disabledIcon: Int? = null,
 )

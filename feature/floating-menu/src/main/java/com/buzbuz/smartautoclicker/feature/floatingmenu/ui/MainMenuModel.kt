@@ -26,9 +26,6 @@ import androidx.lifecycle.viewModelScope
 import com.buzbuz.smartautoclicker.core.domain.Repository
 import com.buzbuz.smartautoclicker.core.processing.domain.DetectionRepository
 import com.buzbuz.smartautoclicker.core.processing.domain.DetectionState
-import com.buzbuz.smartautoclicker.feature.billing.IBillingRepository
-import com.buzbuz.smartautoclicker.feature.billing.ProModeAdvantage
-import com.buzbuz.smartautoclicker.feature.billing.domain.BillingRepository
 import com.buzbuz.smartautoclicker.feature.scenario.config.domain.EditionRepository
 import com.buzbuz.smartautoclicker.feature.scenario.debugging.domain.DebuggingRepository
 import com.buzbuz.smartautoclicker.core.ui.monitoring.MonitoredViewsManager
@@ -36,12 +33,9 @@ import com.buzbuz.smartautoclicker.core.ui.monitoring.ViewPositioningType
 import com.buzbuz.smartautoclicker.core.ui.monitoring.MonitoredViewType
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.time.Duration.Companion.minutes
 
 /**
  * View model for the [MainMenu].
@@ -59,18 +53,8 @@ class MainMenuModel(application: Application) : AndroidViewModel(application) {
 
     /** The currently loaded scenario info. */
     private val editionRepository: EditionRepository = EditionRepository.getInstance(application)
-    /** The repository for the pro mode billing. */
-    private val billingRepository: BillingRepository = IBillingRepository.getRepository(application.applicationContext)
     /** The repository for the scenario debugging info. */
     private val debugRepository: DebuggingRepository = DebuggingRepository.getDebuggingRepository(application)
-
-    /** Tells if the pro mode is purchased. */
-    private val isProModePurchased: StateFlow<Boolean> = billingRepository.isProModePurchased
-        .stateIn(
-            viewModelScope,
-            SharingStarted.Eagerly,
-            false,
-        )
 
     private val scenarioDbId: StateFlow<Long?> = detectionRepository.scenarioId
         .map { it?.databaseId }
@@ -79,11 +63,6 @@ class MainMenuModel(application: Application) : AndroidViewModel(application) {
             started = SharingStarted.Eagerly,
             initialValue = null,
         )
-
-    /** Coroutine Job stopping the detection automatically if user is not in pro mode. */
-    private var autoStopJob: Job? = null
-
-    val isBillingFlowInProgress: Flow<Boolean> = billingRepository.isBillingFlowInProcess
 
     /** The current of the detection. */
     val detectionState: StateFlow<UiState> = detectionRepository.detectionState
@@ -102,32 +81,16 @@ class MainMenuModel(application: Application) : AndroidViewModel(application) {
         }
 
     /** Start/Stop the detection. */
-    fun toggleDetection(context: Context, onStoppedByLimitation: () -> Unit) {
-        autoStopJob?.cancel()
-        autoStopJob = null
-
+    fun toggleDetection(context: Context) {
         when (detectionState.value) {
             UiState.Detecting -> detectionRepository.stopDetection()
-            UiState.Idle -> startDetection(context, onStoppedByLimitation)
+            UiState.Idle -> startDetection(context)
         }
     }
 
-    private fun startDetection(context: Context, onStoppedByLimitation: () -> Unit) {
+    private fun startDetection(context: Context) {
         viewModelScope.launch {
             detectionRepository.startDetection(context, debugRepository.getDebugProgressListener(context))
-        }
-
-        if (!isProModePurchased.value) {
-            autoStopJob = viewModelScope.launch {
-                delay(ProModeAdvantage.Limitation.DETECTION_DURATION_MINUTES_LIMIT.limit.minutes.inWholeMilliseconds)
-
-                detectionRepository.stopDetection()
-                onStoppedByLimitation()
-                billingRepository.startBillingActivity(
-                    context,
-                    ProModeAdvantage.Limitation.DETECTION_DURATION_MINUTES_LIMIT,
-                )
-            }
         }
     }
 

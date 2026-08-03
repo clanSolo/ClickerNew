@@ -22,8 +22,6 @@ import android.view.View
 
 import androidx.lifecycle.AndroidViewModel
 
-import com.buzbuz.smartautoclicker.feature.billing.IBillingRepository
-import com.buzbuz.smartautoclicker.feature.billing.ProModeAdvantage
 import com.buzbuz.smartautoclicker.core.domain.model.event.Event
 import com.buzbuz.smartautoclicker.core.domain.Repository
 import com.buzbuz.smartautoclicker.core.ui.monitoring.MonitoredViewType
@@ -40,22 +38,12 @@ class EventListViewModel(application: Application) : AndroidViewModel(applicatio
     private val repository: Repository = Repository.getRepository(application)
     /** Maintains the currently configured scenario state. */
     private val editionRepository = EditionRepository.getInstance(application)
-    /** The repository for the pro mode billing. */
-    private val billingRepository = IBillingRepository.getRepository(application)
     /** Monitors the views. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
     /** Currently configured events. */
     val eventsItems = editionRepository.editionState.eventsState
         .mapNotNull { it.value }
-
-    /** Tells if the limitation in event count have been reached. */
-    val isEventLimitReached: Flow<Boolean> = billingRepository.isProModePurchased
-        .combine(eventsItems) { isProModePurchased, events ->
-            !isProModePurchased && events.size >= ProModeAdvantage.Limitation.EVENT_COUNT_LIMIT.limit
-        }
-    /** Tells if the pro mode billing flow is being displayed. */
-    val isBillingFlowDisplayed: Flow<Boolean> = billingRepository.isBillingFlowInProcess
 
     /** Tells if the copy button should be visible or not. */
     val copyButtonIsVisible: Flow<Boolean> =
@@ -86,10 +74,6 @@ class EventListViewModel(application: Application) : AndroidViewModel(applicatio
 
     /** Update the priority of the events in the scenario. */
     fun updateEventsPriority(events: List<Event>) = editionRepository.updateEventsOrder(events)
-
-    fun onEventCountReachedAddCopyClicked(context: Context) {
-        billingRepository.startBillingActivity(context, ProModeAdvantage.Limitation.EVENT_COUNT_LIMIT)
-    }
 
     fun monitorFirstEventView(view: View) {
         monitoredViewsManager.attach(MonitoredViewType.SCENARIO_DIALOG_ITEM_FIRST_EVENT, view)

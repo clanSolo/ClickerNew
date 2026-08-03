@@ -21,14 +21,11 @@ import android.content.Context
 import android.view.View
 
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
 
 import com.buzbuz.smartautoclicker.core.ui.overlays.dialog.DialogChoice
 import com.buzbuz.smartautoclicker.core.domain.model.action.Action
 import com.buzbuz.smartautoclicker.core.ui.monitoring.MonitoredViewsManager
 import com.buzbuz.smartautoclicker.core.ui.monitoring.MonitoredViewType
-import com.buzbuz.smartautoclicker.feature.billing.IBillingRepository
-import com.buzbuz.smartautoclicker.feature.billing.ProModeAdvantage
 import com.buzbuz.smartautoclicker.feature.scenario.config.R
 import com.buzbuz.smartautoclicker.feature.scenario.config.domain.EditionRepository
 import com.buzbuz.smartautoclicker.feature.scenario.config.ui.bindings.ActionDetails
@@ -36,28 +33,17 @@ import com.buzbuz.smartautoclicker.feature.scenario.config.ui.bindings.toActionD
 
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 
 class ActionsViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Maintains the currently configured scenario state. */
     private val editionRepository = EditionRepository.getInstance(application)
-    /** The repository for the pro mode billing. */
-    private val billingRepository = IBillingRepository.getRepository(application)
     /** Monitors views. */
     private val monitoredViewsManager: MonitoredViewsManager = MonitoredViewsManager.getInstance()
 
     /** Currently configured actions. */
     private val configuredActions = editionRepository.editionState.editedEventActionsState
-
-    /** Tells if the limitation in action count have been reached. */
-    val isActionLimitReached: Flow<Boolean> = billingRepository.isProModePurchased
-        .combine(configuredActions) { isProModePurchased, actions ->
-            !isProModePurchased && ((actions.value?.size ?: 0) >= ProModeAdvantage.Limitation.ACTION_COUNT_LIMIT.limit)
-        }
 
     /** Tells if there is at least one action to copy. */
     val canCopyAction: Flow<Boolean> = combine(
@@ -77,23 +63,13 @@ class ActionsViewModel(application: Application) : AndroidViewModel(application)
             } ?: emptyList()
         }
     /** Type of actions to be displayed in the new action creation dialog. */
-    val actionCreationItems: StateFlow<List<ActionTypeChoice>> = billingRepository.isProModePurchased
-        .map { isProModePurchased ->
-            buildList {
-                add(ActionTypeChoice.Click)
-                add(ActionTypeChoice.Swipe)
-                add(ActionTypeChoice.Pause)
-                add(ActionTypeChoice.Intent(isProModePurchased))
-                add(ActionTypeChoice.ToggleEvent(isProModePurchased))
-            }
-        }.stateIn(
-            viewModelScope,
-            SharingStarted.Eagerly,
-            emptyList(),
-        )
-
-    /** Tells if the pro mode billing flow is being displayed. */
-    val isBillingFlowDisplayed: Flow<Boolean> = billingRepository.isBillingFlowInProcess
+    val actionCreationItems: List<ActionTypeChoice> = listOf(
+        ActionTypeChoice.Click,
+        ActionTypeChoice.Swipe,
+        ActionTypeChoice.Pause,
+        ActionTypeChoice.Intent,
+        ActionTypeChoice.ToggleEvent,
+    )
 
     /**
      * Create a new action with the default values from configuration.
@@ -131,21 +107,6 @@ class ActionsViewModel(application: Application) : AndroidViewModel(application)
     fun updateActionOrder(actions: List<Pair<Action, ActionDetails>>) =
         editionRepository.updateActionsOrder(actions.map { it.first })
 
-    fun onActionCountReachedAddCopyClicked(context: Context) {
-        billingRepository.startBillingActivity(context, ProModeAdvantage.Limitation.ACTION_COUNT_LIMIT)
-    }
-
-    fun onProModeUnsubscribedActionClicked(context: Context, choice: ActionTypeChoice) {
-        val feature = when (choice) {
-            is ActionTypeChoice.Intent -> ProModeAdvantage.Feature.ACTION_TYPE_INTENT
-            is ActionTypeChoice.ToggleEvent -> ProModeAdvantage.Feature.ACTION_TYPE_TOGGLE_EVENT
-            else -> return
-        }
-
-        billingRepository.startBillingActivity(context, feature)
-    }
-
-
     fun monitorCreateActionView(view: View) {
         monitoredViewsManager.attach(MonitoredViewType.EVENT_DIALOG_BUTTON_CREATE_ACTION, view)
     }
@@ -169,47 +130,39 @@ sealed class ActionTypeChoice(
     title: Int,
     description: Int,
     iconId: Int?,
-    enabled: Boolean,
 ): DialogChoice(
     title = title,
     description = description,
     iconId = iconId,
-    disabledIconId = R.drawable.ic_pro_small,
-    enabled = enabled,
 ) {
     /** Click Action choice. */
     object Click : ActionTypeChoice(
         R.string.item_title_click,
         R.string.item_desc_click,
         R.drawable.ic_click,
-        enabled = true,
     )
     /** Swipe Action choice. */
     object Swipe : ActionTypeChoice(
         R.string.item_title_swipe,
         R.string.item_desc_swipe,
         R.drawable.ic_swipe,
-        enabled = true,
     )
     /** Pause Action choice. */
     object Pause : ActionTypeChoice(
         R.string.item_title_pause,
         R.string.item_desc_pause,
         R.drawable.ic_wait,
-        enabled = true,
     )
     /** Intent Action choice. */
-    class Intent(enabled: Boolean) : ActionTypeChoice(
+    object Intent : ActionTypeChoice(
         R.string.item_title_intent,
         R.string.item_desc_intent,
         R.drawable.ic_intent,
-        enabled = enabled,
     )
     /** Toggle Event Action choice. */
-    class ToggleEvent(enabled: Boolean) : ActionTypeChoice(
+    object ToggleEvent : ActionTypeChoice(
         R.string.item_title_toggle_event,
         R.string.item_desc_toggle_event,
         R.drawable.ic_toggle_event,
-        enabled = enabled,
     )
 }

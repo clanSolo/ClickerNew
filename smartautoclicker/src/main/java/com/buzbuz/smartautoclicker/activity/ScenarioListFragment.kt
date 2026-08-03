@@ -49,8 +49,6 @@ import com.buzbuz.smartautoclicker.core.domain.model.scenario.Scenario
 import com.buzbuz.smartautoclicker.databinding.DialogEditBinding
 import com.buzbuz.smartautoclicker.databinding.FragmentScenariosBinding
 import com.buzbuz.smartautoclicker.feature.backup.ui.BackupDialogFragment
-import com.buzbuz.smartautoclicker.feature.scenario.config.utils.ALPHA_DISABLED_ITEM
-import com.buzbuz.smartautoclicker.feature.scenario.config.utils.ALPHA_ENABLED_ITEM
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.shape.MaterialShapeDrawable
@@ -113,6 +111,7 @@ class ScenarioListFragment : Fragment() {
             list.adapter = scenariosAdapter
 
             emptyCreateButton.setOnClickListener { onCreateClicked() }
+            add.setOnClickListener { onCreateClicked() }
 
             appBarLayout.statusBarForeground = MaterialShapeDrawable.createWithElevationOverlay(context)
             topAppBar.apply {
@@ -132,7 +131,6 @@ class ScenarioListFragment : Fragment() {
 
         when (item.itemId) {
             R.id.action_export -> when {
-                !uiState.isProModePurchased -> scenarioViewModel.onExportClickedWithoutProMode(requireContext())
                 uiState.type == ScenarioListFragmentUiState.Type.EXPORT -> showBackupDialog(
                     isImport = false,
                     scenariosToBackup = scenarioViewModel.getScenariosSelectedForBackup(),
@@ -140,10 +138,7 @@ class ScenarioListFragment : Fragment() {
                 else -> scenarioViewModel.setUiState(ScenarioListFragmentUiState.Type.EXPORT)
             }
 
-            R.id.action_import -> when {
-                !uiState.isProModePurchased -> scenarioViewModel.onImportClickedWithoutProMode(requireContext())
-                else -> showBackupDialog(true)
-            }
+            R.id.action_import -> showBackupDialog(true)
 
             R.id.action_cancel -> scenarioViewModel.setUiState(ScenarioListFragmentUiState.Type.SELECTION)
             R.id.action_search -> scenarioViewModel.setUiState(ScenarioListFragmentUiState.Type.SEARCH)
@@ -159,7 +154,6 @@ class ScenarioListFragment : Fragment() {
 
         updateMenu(uiState.menuUiState)
         updateScenarioList(uiState.listContent)
-        updateScenarioLimitationVisibility(uiState.isScenarioLimitReached)
     }
 
     /**
@@ -216,18 +210,6 @@ class ScenarioListFragment : Fragment() {
         }
 
         scenariosAdapter.submitList(scenarios)
-    }
-
-    private fun updateScenarioLimitationVisibility(isVisible: Boolean) {
-        viewBinding.add.apply {
-            if (isVisible){
-                alpha = ALPHA_DISABLED_ITEM
-                setOnClickListener { scenarioViewModel.onScenarioCountReachedAddCopyClicked(requireContext()) }
-            } else {
-                alpha = ALPHA_ENABLED_ITEM
-                setOnClickListener { onCreateClicked() }
-            }
-        }
     }
 
     /**

@@ -126,7 +126,6 @@ dependencies {
     implementation project(path: ':core:processing')
     implementation project(path: ':core:ui')
     implementation project(path: ':feature:backup')
-    implementation project(path: ':feature:billing')
     implementation project(path: ':feature:floating-menu')
     implementation project(path: ':feature:scenario-config')
     implementation project(path: ':feature:scenario-debugging')

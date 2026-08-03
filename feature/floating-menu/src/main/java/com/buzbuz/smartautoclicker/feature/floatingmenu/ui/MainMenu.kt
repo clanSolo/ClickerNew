@@ -71,7 +71,6 @@ class MainMenu(private val onStopClicked: () -> Unit) : OverlayMenu() {
     /** Animation from pause to play. */
     private lateinit var pauseToPlayDrawable: AnimatedVectorDrawableCompat
 
-    private var billingFlowTriggeredByDetectionLimitation: Boolean = false
     /** The coroutine job for the observable used in debug mode. Null when not in debug mode. */
     private var debugObservableJob: Job? = null
 
@@ -102,20 +101,6 @@ class MainMenu(private val onStopClicked: () -> Unit) : OverlayMenu() {
         viewBinding.layoutDebug.visibility = View.GONE
         setOverlayViewVisibility(View.GONE)
 
-        // When the billing flow is not longer displayed, restore the dialogs states
-        lifecycleScope.launch {
-            repeatOnLifecycle((Lifecycle.State.CREATED)) {
-                viewModel.isBillingFlowInProgress.collect { isDisplayed ->
-                    if (!isDisplayed) {
-                        if (billingFlowTriggeredByDetectionLimitation) {
-                            show()
-                            billingFlowTriggeredByDetectionLimitation = false
-                        }
-                    }
-                }
-            }
-        }
-
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { viewModel.canStartScenario.collect(::updatePlayPauseButtonEnabledState) }
@@ -143,10 +128,7 @@ class MainMenu(private val onStopClicked: () -> Unit) : OverlayMenu() {
     override fun onMenuItemClicked(viewId: Int) {
         when (viewId) {
             R.id.btn_play -> {
-                viewModel.toggleDetection(context) {
-                    billingFlowTriggeredByDetectionLimitation = true
-                    hide()
-                }
+                viewModel.toggleDetection(context)
             }
             R.id.btn_click_list -> {
                 viewModel.startScenarioEdition {

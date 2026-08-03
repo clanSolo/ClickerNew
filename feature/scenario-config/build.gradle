@@ -47,6 +47,5 @@ dependencies {
     implementation project(path: ':core:extensions')
     implementation project(path: ':core:processing')
     implementation project(path: ':core:ui')
-    implementation project(path: ':feature:billing')
     implementation project(path: ':feature:scenario-debugging')
 }
