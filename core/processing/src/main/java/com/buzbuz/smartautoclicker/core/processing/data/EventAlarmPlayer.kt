@@ -16,7 +16,11 @@
  */
 package com.buzbuz.smartautoclicker.core.processing.data
 
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.util.Log
+
+import com.buzbuz.smartautoclicker.core.domain.model.event.Event
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,16 +30,19 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * BISECT STUB: same structure as the real player, but the ToneGenerator usage is stubbed out to
- * isolate the CI compilation failure.
+ * Plays a beep alarm while the events with alarm enabled keep being detected.
+ *
+ * The alarm starts in a beep loop at the first trigger and is silenced automatically when no event with alarm
+ * enabled has been detected during the last [ALARM_STOP_DELAY_MS] milliseconds. All the playback is handled on the
+ * IO dispatcher and never blocks the detection thread.
  */
 internal class EventAlarmPlayer {
 
     /** Scope for the beep loop and the auto stop watchdog. */
     private val playerScope = CoroutineScope(Dispatchers.IO)
 
-    /** True when the alarm resources are available. */
-    private var isStarted: Boolean = false
+    /** Generates the beeps, or null if the player is stopped. */
+    private var toneGenerator: ToneGenerator? = null
     /** Job looping the beeps, null if the alarm is not ringing. */
     private var beepLoopJob: Job? = null
     /** Job stopping the alarm after the stop delay without any trigger. */
@@ -44,12 +51,26 @@ internal class EventAlarmPlayer {
     /** Guards all accesses to the watchdog and beep loop jobs, as they span multiple coroutines. */
     private val stateLock = Any()
 
+    /** Create the tone generator. */
     fun start() {
-        isStarted = true
+        if (toneGenerator != null) return
+
+        try {
+            toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, ToneGenerator.MAX_VOLUME)
+        } catch (rtEx: RuntimeException) {
+            Log.e(TAG, "Cannot create the tone generator, alarm is disabled", rtEx)
+            toneGenerator = null
+        }
     }
 
-    fun onEventTriggered() {
-        if (!isStarted) return
+    /**
+     * Called when an event with alarm enabled is detected.
+     * Starts the beep loop if it is not ringing yet, and re-arms the stop watchdog.
+     *
+     * @param event the event that has been detected.
+     */
+    fun onEventTriggered(event: Event) {
+        val generator = toneGenerator ?: return
 
         synchronized(stateLock) {
             watchdogJob?.cancel()
@@ -63,20 +84,23 @@ internal class EventAlarmPlayer {
             beepLoopJob = playerScope.launch {
                 Log.d(TAG, "Alarm beep loop started")
                 while (isActive) {
-                    Log.d(TAG, "beep")
+                    generator.startTone(ToneGenerator.TONE_CDMA_PIP, BEEP_DURATION_MS)
                     delay(BEEP_INTERVAL_MS)
                 }
             }
         }
     }
 
+    /** Stop the player and release its resources. */
     fun stop() {
-        isStarted = false
         synchronized(stateLock) {
             watchdogJob?.cancel()
             watchdogJob = null
         }
         stopBeepLoop()
+
+        toneGenerator?.release()
+        toneGenerator = null
     }
 
     /** Stop the beep loop, if any. */
@@ -93,6 +117,8 @@ internal class EventAlarmPlayer {
 
 /** Tag for logs. */
 private const val TAG = "EventAlarmPlayer"
+/** Duration of a single beep. */
+private const val BEEP_DURATION_MS = 150
 /** Delay between the start of two beeps. */
 private const val BEEP_INTERVAL_MS = 500L
 /** Delay without any trigger after which the alarm is silenced. */
