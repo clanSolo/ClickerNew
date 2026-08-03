@@ -69,7 +69,7 @@ ext {
     lottieVersion = '6.1.0'
 
     // Native dependencies
-    openCvVersion = '4.8.1'
+    openCvVersion = '4.12.0'
 
     // Test dependencies
     jUnitVersion = '4.13.2'
