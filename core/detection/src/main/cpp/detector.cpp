@@ -30,10 +30,14 @@ void Detector::setScreenMetrics(JNIEnv *env, jobject screenImage, double detecti
     // to update it.
     fullSizeColorCurrentImage = createColorMatFromARGB8888BitmapData(env, screenImage);
 
+    setScreenMetrics(fullSizeColorCurrentImage->cols, fullSizeColorCurrentImage->rows, detectionQuality);
+}
+
+void Detector::setScreenMetrics(int width, int height, double detectionQuality) {
     // Select the scale ratio depending on the screen size.
     // We reduce the size to improve the processing time, but we don't want it to be too small because it will impact
     // the performance of the detection.
-    auto maxImageDim = max(fullSizeColorCurrentImage->rows, fullSizeColorCurrentImage->cols);
+    auto maxImageDim = std::max(width, height);
     if (maxImageDim <= detectionQuality) {
         scaleRatio = 1;
     } else {
@@ -48,6 +52,17 @@ void Detector::setScreenImage(JNIEnv *env, jobject screenImage) {
     // Get screen info from the android bitmap format
     fullSizeColorCurrentImage = createColorMatFromARGB8888BitmapData(env, screenImage);
 
+    updateScaledGrayImage();
+}
+
+void Detector::setScreenImagePixels(void* pixels, int width, int height, std::size_t rowStride) {
+    // Wrap the frame buffer provided by the image reader, without copying its pixels
+    fullSizeColorCurrentImage = std::make_unique<cv::Mat>(height, width, CV_8UC4, pixels, rowStride);
+
+    updateScaledGrayImage();
+}
+
+void Detector::updateScaledGrayImage() {
     // Convert to gray for template matching
     cv::Mat fullSizeGrayCurrentImage(fullSizeColorCurrentImage->rows, fullSizeColorCurrentImage->cols, CV_8UC1);
     cv::cvtColor(*fullSizeColorCurrentImage, fullSizeGrayCurrentImage, cv::COLOR_RGBA2GRAY);

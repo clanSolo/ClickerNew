@@ -172,6 +172,43 @@ class DisplayRecorder internal constructor() {
     }
 
     /**
+     * Acquire the latest screen frame.
+     * When the pixel layout of the image allows it, the frame exposes its buffer directly, avoiding the full
+     * screen bitmap copy of [acquireLatestBitmap]; its image then remains open and MUST be closed once all
+     * accesses to the buffer are finished. Otherwise, the frame falls back to the classic recycled bitmap.
+     *
+     * @return the latest screen frame, or null if no new image is available.
+     */
+    suspend fun acquireLatestScreenFrame(): ScreenFrame? = mutex.withLock {
+        imageReader?.acquireLatestImage()?.let { image ->
+            val plane = image.planes[0]
+            if (plane.pixelStride == RGBA_8888_PIXEL_STRIDE_BYTES) {
+                ScreenFrame(
+                    bitmap = null,
+                    buffer = plane.buffer.apply { rewind() },
+                    width = image.width,
+                    height = image.height,
+                    rowStride = plane.rowStride,
+                    image = image,
+                )
+            } else {
+                // Pixel layout not directly usable by the detection, fallback on the classic bitmap copy
+                image.use { unusableImage ->
+                    latestAcquiredFrameBitmap = unusableImage.toBitmap(latestAcquiredFrameBitmap)
+                    ScreenFrame(
+                        bitmap = latestAcquiredFrameBitmap,
+                        buffer = null,
+                        width = latestAcquiredFrameBitmap!!.width,
+                        height = latestAcquiredFrameBitmap!!.height,
+                        rowStride = 0,
+                        image = null,
+                    )
+                }
+            }
+        }
+    }
+
+    /**
      * Discard the latest image of the screen without copying its pixels.
      * Use it to skip frames at a low cost, the memory copy of [acquireLatestBitmap] is not executed.
      *
@@ -275,3 +312,5 @@ private fun Image.toBitmap(resultBitmap: Bitmap? = null): Bitmap {
     bitmap.copyPixelsFromBuffer(planes[0].buffer)
     return bitmap
 }
+/** The number of bytes per pixel of the RGBA_8888 format, the only pixel stride usable directly by the detection. */
+private const val RGBA_8888_PIXEL_STRIDE_BYTES = 4

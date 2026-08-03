@@ -21,6 +21,8 @@ import android.graphics.Point
 import android.graphics.Rect
 import androidx.annotation.Keep
 
+import java.nio.ByteBuffer
+
 /**
  * Detects bitmaps within other bitmaps for conditions detection on the screen.
  * All calls should be made on the same thread.
@@ -40,12 +42,36 @@ interface ImageDetector : AutoCloseable {
     fun setScreenMetrics(screenBitmap: Bitmap, detectionQuality: Double)
 
     /**
+     * Set the current metrics of the screen from its dimensions.
+     * Same as [setScreenMetrics] with a bitmap, but only requires the size of the screen (e.g. when the detection
+     * consumes the screen frames directly from their pixels buffer).
+     *
+     * @param width the width of the screen in pixels.
+     * @param height the height of the screen in pixels.
+     * @param detectionQuality the quality of the detection. Must be contained in [DETECTION_QUALITY_MIN] and
+     *                         [DETECTION_QUALITY_MAX].
+     */
+    fun setScreenMetrics(width: Int, height: Int, detectionQuality: Double)
+
+    /**
      * Set the bitmap for the screen.
      * All following calls to [detectCondition] methods will be verified against this bitmap.
      *
      * @param screenBitmap the content of the screen as a bitmap.
      */
     fun setupDetection(screenBitmap: Bitmap)
+
+    /**
+     * Set the content of the screen as a pixels buffer.
+     * All following calls to [detectCondition] methods will be verified against this content. The buffer MUST
+     * remain valid until all detections for this frame are completed.
+     *
+     * @param screenBuffer the direct buffer with the frame pixels, in RGBA_8888 format.
+     * @param width the width of the frame in pixels, without the row stride padding.
+     * @param height the height of the frame in pixels.
+     * @param rowStride the row stride of the buffer, in bytes.
+     */
+    fun setupDetection(screenBuffer: ByteBuffer, width: Int, height: Int, rowStride: Int)
 
     /**
      * Prepare the detection of a condition.

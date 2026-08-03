@@ -69,13 +69,20 @@ namespace smartautoclicker {
 
         DetectionResult detectCondition(JNIEnv *env, jlong conditionId, cv::Rect fullSizeDetectionRoi, int threshold);
 
+        /** Update the scaled gray version of the current full size color image. */
+        void updateScaledGrayImage();
+
     public:
 
         Detector() = default;
 
         void setScreenMetrics(JNIEnv *env, jobject screenImage, double detectionQuality);
 
+        void setScreenMetrics(int width, int height, double detectionQuality);
+
         void setScreenImage(JNIEnv *env, jobject screenImage);
+
+        void setScreenImagePixels(void* pixels, int width, int height, std::size_t rowStride);
 
         void prepareCondition(JNIEnv *env, jlong conditionId, jobject conditionImage);
 

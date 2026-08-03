@@ -61,7 +61,7 @@ internal class DetectorEngine(context: Context) {
     /** Listener upon orientation changes. */
     private val orientationListener = ::onOrientationChanged
 
-    /** Record the screen and provide images via [DisplayRecorder.acquireLatestBitmap]. */
+    /** Record the screen and provide images via [DisplayRecorder.acquireLatestScreenFrame]. */
     private val displayRecorder = DisplayRecorder.getInstance()
     /** Process the events conditions to detect them on the screen. */
     private var scenarioProcessor: ScenarioProcessor? = null
@@ -297,8 +297,13 @@ internal class DetectorEngine(context: Context) {
                 continue
             }
 
-            displayRecorder.acquireLatestBitmap()?.let { screenFrame ->
-                scenarioProcessor?.process(screenFrame)
+            displayRecorder.acquireLatestScreenFrame()?.let { screenFrame ->
+                try {
+                    scenarioProcessor?.process(screenFrame)
+                } finally {
+                    // The image backing a direct frame is only released once the detection on it is completed
+                    screenFrame.close()
+                }
                 framesToSkip = detectionFrameInterval
             } ?: delay(NO_IMAGE_DELAY_MS)
         }

@@ -22,6 +22,7 @@ import android.util.Log
 
 import com.buzbuz.smartautoclicker.core.detection.DetectionResult
 import com.buzbuz.smartautoclicker.core.detection.ImageDetector
+import com.buzbuz.smartautoclicker.core.display.ScreenFrame
 import com.buzbuz.smartautoclicker.core.domain.model.condition.Condition
 import com.buzbuz.smartautoclicker.core.domain.model.endcondition.EndCondition
 import com.buzbuz.smartautoclicker.core.domain.model.event.Event
@@ -87,11 +88,11 @@ internal class ScenarioProcessor(
     /**
      * Find an event with the conditions fulfilled on the current image.
      *
-     * @param screenFrame the bitmap containing the current screen display.
+     * @param screenFrame the current frame of the screen display.
      *
      * @return the first Event with all conditions fulfilled, or null if none has been found.
      */
-    suspend fun process(screenFrame: Bitmap) {
+    suspend fun process(screenFrame: ScreenFrame) {
         // No more events enabled, there is nothing more to do. Stop the detection.
         if (scenarioState.areAllEventsDisabled()) {
             onStopRequested()
@@ -141,15 +142,28 @@ internal class ScenarioProcessor(
      * Initialize the detection algorithm with the current screen frame.
      * @return the image, as a Bitmap.
      */
-    private fun initScreenFrame(screenFrame: Bitmap) {
+    private fun initScreenFrame(screenFrame: ScreenFrame) {
         if (invalidateScreenMetrics) {
-            imageDetector.setScreenMetrics(screenFrame, detectionQuality.toDouble())
+            if (screenFrame.isDirect) {
+                imageDetector.setScreenMetrics(screenFrame.width, screenFrame.height, detectionQuality.toDouble())
+            } else {
+                imageDetector.setScreenMetrics(screenFrame.getRequiredBitmap(), detectionQuality.toDouble())
+            }
             // The prepared conditions are invalidated by the new screen metrics, they will be prepared again lazily
             preparedConditionIds.clear()
             invalidateScreenMetrics = false
         }
 
-        imageDetector.setupDetection(screenFrame)
+        if (screenFrame.isDirect) {
+            imageDetector.setupDetection(
+                screenFrame.getRequiredBuffer(),
+                screenFrame.width,
+                screenFrame.height,
+                screenFrame.rowStride,
+            )
+        } else {
+            imageDetector.setupDetection(screenFrame.getRequiredBitmap())
+        }
     }
 
     /**

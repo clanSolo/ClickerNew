@@ -18,6 +18,7 @@
 #include <android/log.h>
 #include <android/bitmap.h>
 #include <jni.h>
+#include <cstdint>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <string>
 
@@ -70,12 +71,39 @@ extern "C" {
         getObject(env, self)->setScreenMetrics(env, screenBitmap, detectionQuality);
     }
 
+    JNIEXPORT void JNICALL Java_com_buzbuz_smartautoclicker_core_detection_NativeDetector_updateScreenMetricsWithSize(
+            JNIEnv *env,
+            jobject self,
+            jint width,
+            jint height,
+            jdouble detectionQuality
+    ) {
+        getObject(env, self)->setScreenMetrics(width, height, detectionQuality);
+    }
+
     JNIEXPORT void JNICALL Java_com_buzbuz_smartautoclicker_core_detection_NativeDetector_setScreenImage(
             JNIEnv *env,
             jobject self,
             jobject screenBitmap
     ) {
         getObject(env, self)->setScreenImage(env, screenBitmap);
+    }
+
+    JNIEXPORT void JNICALL Java_com_buzbuz_smartautoclicker_core_detection_NativeDetector_setScreenBuffer(
+            JNIEnv *env,
+            jobject self,
+            jobject buffer,
+            jint width,
+            jint height,
+            jint rowStride
+    ) {
+        auto* pixels = static_cast<uint8_t*>(env->GetDirectBufferAddress(buffer));
+        if (!pixels) {
+            __android_log_print(ANDROID_LOG_ERROR, "Detector", "Can't set screen image, invalid direct buffer !");
+            return;
+        }
+
+        getObject(env, self)->setScreenImagePixels(pixels, width, height, static_cast<std::size_t>(rowStride));
     }
 
     JNIEXPORT void JNICALL Java_com_buzbuz_smartautoclicker_core_detection_NativeDetector_nativePrepareCondition(

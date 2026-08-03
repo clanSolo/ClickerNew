@@ -20,6 +20,8 @@ import android.graphics.Bitmap
 import android.graphics.Rect
 import androidx.annotation.Keep
 
+import java.nio.ByteBuffer
+
 /**
  * Native implementation of the image detector.
  * It uses OpenCv template matching algorithms to achieve condition detection on the screen.
@@ -61,10 +63,26 @@ class NativeDetector : ImageDetector {
         updateScreenMetrics(screenBitmap, detectionQuality)
     }
 
+    override fun setScreenMetrics(width: Int, height: Int, detectionQuality: Double) {
+        if (isClosed) return
+
+        if (detectionQuality < DETECTION_QUALITY_MIN || detectionQuality > DETECTION_QUALITY_MAX)
+            throw IllegalArgumentException("Invalid detection quality")
+
+        updateScreenMetricsWithSize(width, height, detectionQuality)
+    }
+
     override fun setupDetection(screenBitmap: Bitmap) {
         if (isClosed) return
 
         setScreenImage(screenBitmap)
+    }
+
+    override fun setupDetection(screenBuffer: ByteBuffer, width: Int, height: Int, rowStride: Int) {
+        if (isClosed) return
+        if (!screenBuffer.isDirect) throw IllegalArgumentException("The screen buffer must be direct")
+
+        setScreenBuffer(screenBuffer, width, height, rowStride)
     }
 
     override fun prepareCondition(conditionId: Long, conditionBitmap: Bitmap) {
@@ -104,11 +122,30 @@ class NativeDetector : ImageDetector {
     private external fun updateScreenMetrics(screenBitmap: Bitmap, detectionQuality: Double)
 
     /**
+     * Native method for setting the screen metrics from the screen dimensions.
+     *
+     * @param width the width of the screen in pixels.
+     * @param height the height of the screen in pixels.
+     * @param detectionQuality the quality of the detection.
+     */
+    private external fun updateScreenMetricsWithSize(width: Int, height: Int, detectionQuality: Double)
+
+    /**
      * Native method for detection setup.
      *
      * @param screenBitmap the content of the screen as a bitmap.
      */
     private external fun setScreenImage(screenBitmap: Bitmap)
+
+    /**
+     * Native method for setting the content of the screen as a pixels buffer.
+     *
+     * @param screenBuffer the direct buffer with the frame pixels, in RGBA_8888 format.
+     * @param width the width of the frame in pixels, without the row stride padding.
+     * @param height the height of the frame in pixels.
+     * @param rowStride the row stride of the buffer, in bytes.
+     */
+    private external fun setScreenBuffer(screenBuffer: ByteBuffer, width: Int, height: Int, rowStride: Int)
 
     /**
      * Native method for preparing the detection data of a condition.
