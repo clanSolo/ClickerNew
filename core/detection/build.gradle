@@ -95,7 +95,7 @@ android {
                             "-DBUILD_JAVA=OFF",
                             "-DBUILD_ANDROID_EXAMPLES=OFF",
                             "-DBUILD_ANDROID_PROJECTS=OFF",
-                            "-DBUILD_SHARED_LIBS=OFF"
+                            "-DBUILD_SHARED_LIBS=ON"
                 }
             }
 

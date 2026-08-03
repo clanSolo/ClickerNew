@@ -48,6 +48,14 @@ find_library( # Sets the name of the path variable.
         # you want CMake to locate.
         log )
 
+# Same for the android system library, required by newer OpenCV versions.
+find_library( # Sets the name of the path variable.
+        android-lib
+
+        # Specifies the name of the NDK library that
+        # you want CMake to locate.
+        android )
+
 # In debug, we want to use the prebuilts of OpenCV in order to speed up the dev process/CI
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
 
@@ -92,4 +100,4 @@ ENDIF()
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
-target_link_libraries(smartautoclicker opencv_core opencv_imgproc -ljnigraphics ${log-lib} )
+target_link_libraries(smartautoclicker opencv_core opencv_imgproc -ljnigraphics ${android-lib} ${log-lib} )
