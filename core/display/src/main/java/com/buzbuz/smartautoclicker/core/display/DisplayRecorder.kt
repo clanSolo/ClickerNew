@@ -1,0 +1,342 @@
+/*
+ * Copyright (C) 2023 Kevin Buzeau
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package com.buzbuz.smartautoclicker.core.display
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.PixelFormat
+import android.graphics.Point
+import android.graphics.Rect
+import android.hardware.display.DisplayManager
+import android.hardware.display.VirtualDisplay
+import android.media.Image
+import android.media.ImageReader
+import android.media.projection.MediaProjection
+import android.media.projection.MediaProjectionManager
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+
+import androidx.annotation.MainThread
+import androidx.annotation.WorkerThread
+
+import java.nio.ByteBuffer
+
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+/**
+ * Record the screen and provide [Image] from it.
+ *
+ * Uses the [MediaProjection] API to create a [VirtualDisplay] not shown to the user and containing a copy of the
+ * user device screen content. An [ImageReader] is attached to this display in order to monitor every new frame
+ * displayed on the screen, received in the form of an [Image]. Then, process those Image with ScenarioProcessor
+ * according to the current mode (capture/detection). All Image processing code is executed on a background thread
+ * (methods annotated with [WorkerThread]), and all results callbacks are executed on the main thread (the thread that
+ * has instantiated this class).
+ *
+ * To start recording, call [startProjection] (see method documentation for permission management). This must be done
+ * before any other action on this object. Once the recording isn't necessary anymore, you must stop it by calling
+ * [stopProjection] in order to release all resources associated with this object.
+ */
+@MainThread
+class DisplayRecorder internal constructor() {
+
+    companion object {
+        /** Tag for logs. */
+        private const val TAG = "ScreenRecorder"
+        /** Name of the virtual display generating [Image]. */
+        internal const val VIRTUAL_DISPLAY_NAME = "SmartAutoClicker"
+
+        /** Singleton preventing multiple instances of the ScreenRecorder at the same time. */
+        @Volatile
+        private var INSTANCE: DisplayRecorder? = null
+
+        /**
+         * Get the engine singleton, or instantiates it if it wasn't yet.
+         *
+         * @return the engine singleton.
+         */
+        fun getInstance(): DisplayRecorder {
+            return INSTANCE ?: synchronized(this) {
+                Log.i(TAG, "Instantiates new ScreenRecorder")
+                val instance = DisplayRecorder()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
+
+    /** Synchronization mutex. */
+    private val mutex = Mutex()
+    /**
+     * The token granting applications the ability to capture screen contents by creating a [VirtualDisplay].
+     * Can only be not null if the user have granted the permission displayed by
+     * [MediaProjectionManager.createScreenCaptureIntent].
+     */
+    private var projection: MediaProjection? = null
+    /** Virtual display capturing the content of the screen. */
+    private var virtualDisplay: VirtualDisplay? = null
+    /** Listener to notify upon projection ends. */
+    private var stopListener: (() -> Unit)? = null
+    /** Allow access to [Image] rendered into the surface view of the [VirtualDisplay] */
+    private var imageReader: ImageReader? = null
+
+    /** Cache for the current frame. Interpreted from an [Image]. */
+    private var latestAcquiredFrameBitmap: Bitmap? = null
+
+    /**
+     * Start the media projection.
+     *
+     * Initialize all values required for screen recording and start the thread managing the processing. This method
+     * should be called before anything else in this class. Once you are done with the screen recording, you should
+     * call [stopProjection] in order to release all resources.
+     *
+     * Recording the screen requires the media projection permission code and its data intent, they both can be
+     * retrieved using the results of the activity intent provided by [MediaProjectionManager.createScreenCaptureIntent]
+     * (this Intent shows the dialog warning about screen recording privacy). Any attempt to call this method without
+     * the correct screen capture intent result will leads to a crash.
+     *
+     * If the screen record was already started, this method will have no effect.
+     *
+     * @param context the Android context.
+     * @param resultCode the result code provided by the screen capture intent activity result callback
+     * [android.app.Activity.onActivityResult]
+     * @param data the data intent provided by the screen capture intent activity result callback
+     * [android.app.Activity.onActivityResult]
+     * @param stoppedListener listener called when the projection have been stopped unexpectedly.
+     */
+    suspend fun startProjection(context: Context, resultCode: Int, data: Intent, stoppedListener: () -> Unit) = mutex.withLock {
+        if (projection != null) {
+            Log.w(TAG, "Attempting to start media projection while already started.")
+            return
+        }
+
+        Log.d(TAG, "Start media projection")
+
+        stopListener = stoppedListener
+        val projectionManager = context.getSystemService(Context.MEDIA_PROJECTION_SERVICE)
+                as MediaProjectionManager
+        projection = projectionManager.getMediaProjection(resultCode, data).apply {
+            registerCallback(projectionCallback, Handler(Looper.getMainLooper()))
+        }
+    }
+
+    /**
+     * Start the screen record.
+     * This method should not be called from the main thread, but the processing thread.
+     *
+     * @param context the Android context.
+     * @param displaySize the size of the display, in pixels.
+     */
+    suspend fun startScreenRecord(context: Context, displaySize: Point): Unit = mutex.withLock {
+        if (projection == null || imageReader != null) {
+            Log.w(TAG, "Attempting to start screen record while already started.")
+            return
+        }
+
+        Log.d(TAG, "Start screen record")
+
+        @SuppressLint("WrongConstant")
+        imageReader = ImageReader.newInstance(displaySize.x, displaySize.y, PixelFormat.RGBA_8888, 2)
+        try {
+            virtualDisplay = projection!!.createVirtualDisplay(
+                VIRTUAL_DISPLAY_NAME, displaySize.x, displaySize.y, context.resources.configuration.densityDpi,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, imageReader!!.surface, null,
+                null)
+        } catch (sEx: SecurityException) {
+            Log.w(TAG, "Screencast permission is no longer valid, stopping Smart AutoClicker...")
+            stopListener?.invoke()
+        }
+    }
+
+    /** @return the last image of the screen, or null if they have been processed. */
+    suspend fun acquireLatestBitmap(): Bitmap? = mutex.withLock {
+        imageReader?.acquireLatestImage()?.use { image ->
+            latestAcquiredFrameBitmap = image.toBitmap(latestAcquiredFrameBitmap)
+            latestAcquiredFrameBitmap
+        }
+    }
+
+    /**
+     * Acquire the latest screen frame.
+     * When the pixel layout of the image allows it, the frame exposes its buffer directly, avoiding the full
+     * screen bitmap copy of [acquireLatestBitmap]; its image then remains open and MUST be closed once all
+     * accesses to the buffer are finished. Otherwise, the frame falls back to the classic recycled bitmap.
+     *
+     * @return the latest screen frame, or null if no new image is available.
+     */
+    suspend fun acquireLatestScreenFrame(): ScreenFrame? = mutex.withLock {
+        imageReader?.acquireLatestImage()?.let { image ->
+            val plane = image.planes[0]
+            if (plane.pixelStride == RGBA_8888_PIXEL_STRIDE_BYTES) {
+                ScreenFrame(
+                    bitmap = null,
+                    buffer = plane.buffer.apply { rewind() },
+                    width = image.width,
+                    height = image.height,
+                    rowStride = plane.rowStride,
+                    image = image,
+                )
+            } else {
+                // Pixel layout not directly usable by the detection, fallback on the classic bitmap copy
+                image.use { unusableImage ->
+                    latestAcquiredFrameBitmap = unusableImage.toBitmap(latestAcquiredFrameBitmap)
+                    ScreenFrame(
+                        bitmap = latestAcquiredFrameBitmap,
+                        buffer = null,
+                        width = latestAcquiredFrameBitmap!!.width,
+                        height = latestAcquiredFrameBitmap!!.height,
+                        rowStride = 0,
+                        image = null,
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Discard the latest image of the screen without copying its pixels.
+     * Use it to skip frames at a low cost, the memory copy of [acquireLatestBitmap] is not executed.
+     *
+     * @return true if an image was discarded, false if no new image was available.
+     */
+    suspend fun discardLatestFrame(): Boolean = mutex.withLock {
+        imageReader?.acquireLatestImage()?.let { image ->
+            image.close()
+            true
+        } ?: false
+    }
+
+    suspend fun takeScreenshot(area: Rect, completion: suspend (Bitmap) -> Unit) {
+        var screenFrame: Bitmap?
+        do {
+            screenFrame = acquireLatestBitmap()
+            screenFrame?.let {
+                val bitmap = Bitmap.createBitmap(
+                    it,
+                    area.left,
+                    area.top,
+                    area.width(),
+                    area.height()
+                )
+
+                completion(bitmap)
+            }
+        } while (screenFrame == null)
+    }
+
+    /**
+     * Stop the screen recording.
+     * This method should not be called from the main thread, but the processing thread.
+     */
+    suspend fun stopScreenRecord() = mutex.withLock {
+        Log.d(TAG, "Stop screen record")
+
+        virtualDisplay?.apply {
+            release()
+            virtualDisplay = null
+        }
+        imageReader?.apply {
+            close()
+            imageReader = null
+        }
+    }
+
+    /**
+     * Stop the media projection previously started with [startProjection].
+     *
+     * This method will free/close any resources related to screen recording. If a detection was started, it will be
+     * stopped. If the screen record wasn't started, this method will have no effect.
+     */
+    suspend fun stopProjection() {
+        Log.d(TAG, "Stop media projection")
+
+        stopScreenRecord()
+
+        mutex.withLock {
+            projection?.apply {
+                unregisterCallback(projectionCallback)
+                stop()
+            }
+            projection = null
+            stopListener = null
+        }
+    }
+
+    /** Called when the user have stopped the projection by clicking on the 'Cast' icon in the status bar. */
+    private val projectionCallback = object : MediaProjection.Callback() {
+
+        override fun onStop() {
+            Log.i(TAG, "Projection stopped by the user")
+            // We only notify, we let the detector take care of calling stopScreenRecord
+            stopListener?.invoke()
+        }
+    }
+}
+
+/**
+ * Transform an Image into a bitmap.
+ *
+ * @param resultBitmap a bitmap to use as a cache in order to avoid instantiating an new one. If null, a new one is
+ *                     created.
+ * @return the bitmap corresponding to the image, with the exact size of the screen. If [resultBitmap] was provided,
+ *         it will be the same object.
+ */
+private fun Image.toBitmap(resultBitmap: Bitmap? = null): Bitmap {
+    val plane = planes[0]
+
+    var bitmap = resultBitmap
+    if (bitmap == null) {
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    } else if (bitmap.width != width || bitmap.height != height) {
+        try {
+            bitmap.reconfigure(width, height, Bitmap.Config.ARGB_8888)
+        } catch (ex: IllegalArgumentException) {
+            bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        }
+    }
+
+    if (plane.rowStride == plane.pixelStride * width) {
+        bitmap.copyPixelsFromBuffer(plane.buffer)
+    } else {
+        // Some devices align the buffer rows on bigger memory boundaries, adding a padding at the end of each row
+        // (rowStride > pixelStride * width). Copy the buffer row by row to skip that padding, otherwise the extra
+        // columns would appear as a garbage band at the right edge of the bitmap and of any crop saved from it.
+        val rowContentSize = plane.pixelStride * width
+        val bitmapBuffer = ByteBuffer.allocateDirect(rowContentSize * height)
+        val buffer = plane.buffer.duplicate()
+        val pixelRow = ByteArray(rowContentSize)
+
+        var rowStart = 0
+        repeat(height) {
+            buffer.position(rowStart)
+            buffer.get(pixelRow)
+            bitmapBuffer.put(pixelRow)
+            rowStart += plane.rowStride
+        }
+
+        bitmapBuffer.rewind()
+        bitmap.copyPixelsFromBuffer(bitmapBuffer)
+    }
+
+    return bitmap
+}
+/** The number of bytes per pixel of the RGBA_8888 format, the only pixel stride usable directly by the detection. */
+private const val RGBA_8888_PIXEL_STRIDE_BYTES = 4

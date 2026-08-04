@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="section_title_detection_interval">Intervalo de Detección</string>
+    <string name="message_detection_interval_description">Ignora N fotogramas entre dos detecciones. 0 procesa todos los fotogramas</string>
+    <string name="item_title_take_captures">Tomar capturas</string>
+    <string name="item_desc_take_captures">Guarda una captura de pantalla en la carpeta Captures de la app cada vez que se dispare este evento</string>
+    <string name="item_title_sound_alarm">Sonar alarma</string>
+    <string name="item_desc_sound_alarm">Suena una alarma de beeps mientras este evento coincida, y se silencia cuando deja de detectarse</string>
+</resources>

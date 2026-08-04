@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Kevin Buzeau
+ * Copyright (C) 2023 Kevin Buzeau
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,26 +21,38 @@ import android.graphics.Point
 import android.net.Uri
 
 import com.buzbuz.smartautoclicker.core.database.ClickDatabase
-import com.buzbuz.smartautoclicker.core.domain.IRepository
-import com.buzbuz.smartautoclicker.core.dumb.data.database.DumbDatabase
-import com.buzbuz.smartautoclicker.core.dumb.domain.IDumbRepository
+import com.buzbuz.smartautoclicker.core.domain.Repository
 import com.buzbuz.smartautoclicker.feature.backup.data.BackupEngine
 import com.buzbuz.smartautoclicker.feature.backup.data.BackupProgress
-import dagger.hilt.android.qualifiers.ApplicationContext
 
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class BackupRepository @Inject constructor(
-    @ApplicationContext context: Context,
-    private val dumbDatabase: DumbDatabase,
-    private val dumbRepository: IDumbRepository,
-    private val smartDatabase: ClickDatabase,
-    private val smartRepository: IRepository,
-) {
+internal class BackupRepository private constructor(context: Context) {
+
+    companion object {
+
+        /** Singleton preventing multiple instances of the BackupRepository at the same time. */
+        @Volatile
+        private var INSTANCE: BackupRepository? = null
+
+        /**
+         * Get the BackupRepository singleton, or instantiates it if it wasn't yet.
+         * @param context the Android context.
+         * @return the BackupRepository singleton.
+         */
+        fun getInstance(context: Context): BackupRepository {
+            return INSTANCE ?: synchronized(this) {
+                val instance = BackupRepository(context)
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
+
+    private val database: ClickDatabase = ClickDatabase.getDatabase(context)
+
+    private val localDataRepository: Repository = Repository.getRepository(context)
 
     private val backupEngine: BackupEngine = BackupEngine(
         appDataDir = context.filesDir,
@@ -51,37 +63,24 @@ class BackupRepository @Inject constructor(
      * Create a backup of the provided scenario into the provided file.
      *
      * @param zipFileUri the uri of the file to write the backup into. Must be retrieved using the DocumentProvider.
-     * @param dumbScenarios the dumb scenarios to backup.
-     * @param smartScenarios the smart scenarios to backup.
+     * @param scenarios the scenarios to backup.
      * @param screenSize the size of this device screen.
      *
      * @return a flow on the backup creation progress.
      */
-    fun createScenarioBackup(
-        zipFileUri: Uri,
-        dumbScenarios: List<Long>,
-        smartScenarios: List<Long>,
-        screenSize: Point,
-    ) = channelFlow {
+    fun createScenarioBackup(zipFileUri: Uri, scenarios: List<Long>, screenSize: Point) = channelFlow  {
         launch {
             backupEngine.createBackup(
-                zipFileUri = zipFileUri,
-                dumbScenarios = dumbScenarios.mapNotNull {
-                    dumbDatabase.dumbScenarioDao().getDumbScenariosWithAction(it)
+                zipFileUri,
+                scenarios.mapNotNull {
+                    database.scenarioDao().getCompleteScenario(it)
                 },
-                smartScenarios = smartScenarios.mapNotNull {
-                    smartDatabase.scenarioDao().getCompleteScenario(it)
-                },
-                screenSize = screenSize,
-                progress = BackupProgress(
+                screenSize,
+                BackupProgress(
                     onError = { send(Backup.Error) },
                     onProgressChanged = { current, max -> send(Backup.Loading(current, max)) },
-                    onCompleted = { dumbs, smarts, failureCount, compatWarning ->
-                        send(Backup.Completed(
-                            successCount = dumbs.size + smarts.size,
-                            failureCount = failureCount,
-                            compatWarning = compatWarning,
-                        ))
+                    onCompleted = { success, failureCount, compatWarning ->
+                        send(Backup.Completed(success.size, failureCount, compatWarning))
                     }
                 )
             )
@@ -105,32 +104,22 @@ class BackupRepository @Inject constructor(
                     onError = { send(Backup.Error) },
                     onProgressChanged = { current, max -> send(Backup.Loading(current, max)) },
                     onVerification = { send(Backup.Verification) },
-                    onCompleted = { dumbs, smarts, failureCount, compatWarning ->
+                    onCompleted = { success, failureCount, compatWarning ->
+
                         var totalFailures = failureCount
-
-                        val dumbsSnapshot = dumbs.toList()
-                        val dumbsSuccess = dumbsSnapshot.toMutableList()
-                        dumbsSnapshot.forEach { completeScenario ->
-                            if (dumbRepository.addDumbScenarioCopy(completeScenario) == null) {
-                                dumbsSuccess.remove(completeScenario)
+                        val actualSuccess = success.toMutableList()
+                        success.forEach { completeScenario ->
+                            if (localDataRepository.addScenarioCopy(completeScenario) == null) {
+                                actualSuccess.remove(completeScenario)
                                 totalFailures++
                             }
                         }
 
-                        val smartsSnapshot = smarts.toList()
-                        val smartsSuccess = smartsSnapshot.toMutableList()
-                        smartsSnapshot.forEach { completeScenario ->
-                            if (smartRepository.addScenarioCopy(completeScenario) == null) {
-                                smartsSuccess.remove(completeScenario)
-                                totalFailures++
-                            }
-                        }
+                        // Convert the legacy whole screen conditions that the imported scenarios could contain into
+                        // in area conditions targeting the full display
+                        localDataRepository.convertLegacyWholeScreenConditions(maxOf(screenSize.x, screenSize.y))
 
-                        send(Backup.Completed(
-                            successCount = dumbsSuccess.size + smartsSuccess.size,
-                            failureCount = totalFailures,
-                            compatWarning = compatWarning,
-                        ))
+                        send(Backup.Completed(actualSuccess.size, totalFailures, compatWarning))
                     }
                 )
             )

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Kevin Buzeau
+ * Copyright (C) 2023 Kevin Buzeau
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,17 +32,14 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-
 import com.buzbuz.smartautoclicker.feature.backup.R
 import com.buzbuz.smartautoclicker.feature.backup.databinding.DialogBackupBinding
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import dagger.hilt.android.AndroidEntryPoint
 
 import kotlinx.coroutines.launch
 
 /** Fragment displaying the state of a backup (import or export). */
-@AndroidEntryPoint
 class BackupDialogFragment : DialogFragment() {
 
     companion object {
@@ -53,29 +50,19 @@ class BackupDialogFragment : DialogFragment() {
         private const val FRAGMENT_ARG_KEY_IS_IMPORT = ":backup:fragment_args_key_is_import"
         /** Key for this fragment argument. Contains the list of scenario identifier to export (LongArray). */
         private const val FRAGMENT_ARG_KEY_SCENARIO_LIST = ":backup:fragment_args_key_scenario_list"
-        /** Key for this fragment argument. Contains the list of dumb scenario identifier to export (LongArray). */
-        private const val FRAGMENT_ARG_KEY_DUMB_SCENARIO_LIST = ":backup:fragment_args_key_dumb_scenario_list"
 
         /**
          * Creates a new instance of this fragment.
          * @param isImport true for an import, false for an export.
-         * @param exportSmartScenarios the list of scenario identifier to be exported. Ignored for import.
-         * @param exportDumbScenarios the list of dumb scenario identifier to be exported. Ignored for import.
+         * @param exportScenarios the list of scenario identifier to be exported. Ignored for import.
          * @return the new fragment.
          */
-        fun newInstance(
-            isImport: Boolean,
-            exportSmartScenarios: Collection<Long>? = null,
-            exportDumbScenarios: Collection<Long>? = null,
-        ) : BackupDialogFragment {
+        fun newInstance(isImport: Boolean, exportScenarios: Collection<Long>? = null) : BackupDialogFragment {
             return BackupDialogFragment().apply {
                 arguments = Bundle().apply {
                     putBoolean(FRAGMENT_ARG_KEY_IS_IMPORT, isImport)
-                    exportSmartScenarios?.let {
+                    exportScenarios?.let {
                         putLongArray(FRAGMENT_ARG_KEY_SCENARIO_LIST, it.toLongArray())
-                    }
-                    exportDumbScenarios?.let {
-                        putLongArray(FRAGMENT_ARG_KEY_DUMB_SCENARIO_LIST, it.toLongArray())
                     }
                 }
             }
@@ -92,24 +79,18 @@ class BackupDialogFragment : DialogFragment() {
     /** Fragment argument. True for import, false for export. */
     private val isImport: Boolean by lazy { arguments?.getBoolean(FRAGMENT_ARG_KEY_IS_IMPORT)?: false }
     /** Fragment argument, export only. The list of scenario identifier to be exported. */
-    private val exportSmartScenarios: List<Long> by lazy {
+    private val exportScenarios: List<Long> by lazy {
         arguments?.getLongArray(FRAGMENT_ARG_KEY_SCENARIO_LIST)?.toList() ?: emptyList()
-    }
-    /** Fragment argument, export only. The list of dumb scenario identifier to be exported. */
-    private val exportDumbScenarios: List<Long> by lazy {
-        arguments?.getLongArray(FRAGMENT_ARG_KEY_DUMB_SCENARIO_LIST)?.toList() ?: emptyList()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        backupViewModel.initialize(requireContext(), isImport)
+        backupViewModel.initialize(isImport)
 
         backupActivityResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == AppCompatActivity.RESULT_OK) {
-                result.data?.data?.also { uri ->
-                    backupViewModel.startBackup(requireContext(), uri, isImport, exportDumbScenarios, exportSmartScenarios)
-                }
+                result.data?.data?.also { uri -> backupViewModel.startBackup(uri, isImport, exportScenarios) }
             }
         }
 
