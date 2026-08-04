@@ -451,8 +451,8 @@ const val OPERATOR_DEFAULT_VALUE = OPERATOR_LOWER_BOUND
 
 /** Detection type lower bound on compat deserialization. */
 const val DETECTION_TYPE_LOWER_BOUND = 1
-/** Detection type upper bound on compat deserialization. */
-const val DETECTION_TYPE_UPPER_BOUND = 2
+/** Detection type upper bound on compat deserialization (IN_AREA; the values are not contiguous because the removed whole screen type keeps the value 2). */
+const val DETECTION_TYPE_UPPER_BOUND = 3
 /** Detection type default value on compat deserialization. */
 const val DETECTION_TYPE_DEFAULT_VALUE = DETECTION_TYPE_LOWER_BOUND
 
